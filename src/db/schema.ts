@@ -14,7 +14,6 @@ export const usersTable = pgTable("users", {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
   username: varchar({ length: 255 }).notNull(),
   password: text().notNull(),
-  publicKey: text().notNull(),
   role: usersRole("role").notNull().default("students"),
 });
 

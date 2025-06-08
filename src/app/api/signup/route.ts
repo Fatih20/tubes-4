@@ -5,11 +5,7 @@ import { eq } from "drizzle-orm";
 
 export async function POST(request: Request) {
   try {
-    const {
-      username,
-      password: hashedPassword,
-      publicKey,
-    } = await request.json();
+    const { username, password: hashedPassword } = await request.json();
 
     if (!username || !hashedPassword) {
       return NextResponse.json(
@@ -22,7 +18,7 @@ export async function POST(request: Request) {
     const existingUser = await db
       .select()
       .from(usersTable)
-      .where(eq(usersTable.name, username))
+      .where(eq(usersTable.username, username))
       .limit(1);
 
     if (existingUser.length > 0) {
@@ -35,9 +31,9 @@ export async function POST(request: Request) {
     // Insert new user
     // The password is already hashed on the client-side
     await db.insert(usersTable).values({
-      name: username,
+      username,
       password: hashedPassword,
-      publicKey,
+      role: "students",
     });
 
     return NextResponse.json(

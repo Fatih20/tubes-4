@@ -36,6 +36,13 @@
       "when": 1749376402038,
       "tag": "0004_nebulous_stardust",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1749376660619,
+      "tag": "0005_freezing_king_cobra",
+      "breakpoints": true
     }
   ]
 }
