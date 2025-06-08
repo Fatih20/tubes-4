@@ -22,6 +22,20 @@
       "when": 1746869626303,
       "tag": "0002_bored_mordo",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1749376296643,
+      "tag": "0003_silly_stark_industries",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1749376402038,
+      "tag": "0004_nebulous_stardust",
+      "breakpoints": true
     }
   ]
 }

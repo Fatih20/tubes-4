@@ -15,7 +15,7 @@ export const usersTable = pgTable("users", {
   username: varchar({ length: 255 }).notNull(),
   password: text().notNull(),
   publicKey: text().notNull(),
-  role: usersRole("students").notNull(),
+  role: usersRole("role").notNull().default("students"),
 });
 
 export const studentRecordsTable = pgTable("student_records", {
