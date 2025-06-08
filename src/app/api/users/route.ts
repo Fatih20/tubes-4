@@ -12,8 +12,7 @@ async function getOtherUsersFromDB(
     const users = await db
       .select({
         id: usersTable.id,
-        username: usersTable.name, // Use 'name' field as 'username'
-        publicKey: usersTable.publicKey,
+        username: usersTable.username,
       })
       .from(usersTable)
       .where(not(eq(usersTable.id, currentUserId))); // Exclude the current user
@@ -39,7 +38,7 @@ export async function GET() {
     const currentUser = await db
       .select()
       .from(usersTable)
-      .where(eq(usersTable.name, currentUsername));
+      .where(eq(usersTable.username, currentUsername));
 
     if (currentUser.length === 0) {
       return NextResponse.json(

@@ -34,18 +34,6 @@ const fetchCurrentUser = async () => {
   return response.json();
 };
 
-const fetchUsers = async () => {
-  const response = await fetch(`${API_BASE_URL}/api/users`);
-  if (!response.ok) {
-    if (response.status === 401) {
-      return { status: 401, error: "Unauthorized" };
-    }
-    const errorText = await response.text();
-    throw new Error(`Failed to fetch users: ${response.status} ${errorText}`);
-  }
-  return response.json();
-};
-
 export default function Home() {
   const router = useRouter();
 
@@ -61,27 +49,10 @@ export default function Home() {
     retry: 1,
   });
 
-  const {
-    data: usersResponse,
-    isLoading: isLoadingUsers,
-    error: usersError,
-    refetch: refetchUsers,
-    isError: isUsersError,
-  } = useQuery<User[] | ApiErrorResponse, FetchError>({
-    queryKey: ["users"],
-    queryFn: fetchUsers,
-    enabled:
-      !!currentUserResponse &&
-      !("status" in currentUserResponse && currentUserResponse.status === 401),
-    retry: 1,
-  });
-
   const username =
     currentUserResponse && !("status" in currentUserResponse)
       ? currentUserResponse.username
       : undefined;
-  const users: User[] =
-    usersResponse && Array.isArray(usersResponse) ? usersResponse : [];
 
   useEffect(() => {
     if (
@@ -90,28 +61,8 @@ export default function Home() {
       currentUserResponse.status === 401
     ) {
       router.push("/login");
-    } else if (
-      isCurrentUserError &&
-      currentUserError instanceof Error &&
-      currentUserError.message.includes("Failed to fetch")
-    ) {
     }
-  }, [currentUserResponse, isCurrentUserError, currentUserError, router]);
-
-  useEffect(() => {
-    if (
-      usersResponse &&
-      "status" in usersResponse &&
-      usersResponse.status === 401
-    ) {
-      router.push("/login");
-    }
-  }, [usersResponse, router]);
-
-  useEffect(() => {
-    if (users.length > 0) {
-    }
-  }, [users]);
+  }, [currentUserResponse, router]);
 
   async function handleLogout(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -135,28 +86,8 @@ export default function Home() {
   }
 
   const handleTryAgainClick = () => {
-    if (
-      isCurrentUserError ||
-      (currentUserResponse && "status" in currentUserResponse)
-    ) {
-      refetchCurrentUser();
-    }
-    if (isUsersError || (usersResponse && "status" in usersResponse)) {
-      refetchUsers();
-    } else if (
-      !isLoadingCurrentUser &&
-      currentUserResponse &&
-      !("status" in currentUserResponse)
-    ) {
-      refetchUsers();
-    }
+    refetchCurrentUser();
   };
-
-  const isLoading =
-    isLoadingCurrentUser ||
-    (isLoadingUsers &&
-      !!currentUserResponse &&
-      !("status" in currentUserResponse));
 
   const getErrorMessage = (
     queryError: FetchError | ApiErrorResponse | null | undefined,
@@ -178,15 +109,13 @@ export default function Home() {
 
   const primaryError = isCurrentUserError
     ? getErrorMessage(currentUserError, "Failed to load your profile.")
-    : isUsersError && !isLoadingCurrentUser
-    ? getErrorMessage(usersError, "Failed to load users list.")
     : null;
 
   return (
     <div className="min-h-screen w-full flex flex-col items-center bg-gradient-to-br from-purple-600 to-blue-500 p-4 text-white">
       <header className="w-full max-w-3xl flex justify-between items-center py-4 px-2 md:px-0 mb-6">
         <h1 className="text-2xl sm:text-3xl font-bold text-gray-100 truncate pr-2">
-          {isLoading && !username
+          {isLoadingCurrentUser && !username
             ? "Loading..."
             : username
             ? `Welcome, ${username}!`
@@ -203,7 +132,7 @@ export default function Home() {
       </header>
 
       <main className="bg-white bg-opacity-20 backdrop-filter backdrop-blur-lg p-6 sm:p-8 rounded-xl shadow-2xl text-center max-w-3xl w-full">
-        {isLoading && !primaryError ? (
+        {isLoadingCurrentUser && !primaryError ? (
           <div className="py-10">
             <p className="text-white text-xl">Loading user data...</p>
           </div>
@@ -219,27 +148,12 @@ export default function Home() {
             </button>
           </div>
         ) : (
-          <>
+          <div className="py-10">
             <h2 className="text-3xl font-semibold mb-6 text-gray-700">
-              Contact List
+              Dashboard
             </h2>
-            {users.length > 0 ? (
-              <ul className="space-y-4 text-left">
-                {users.map((user) => (
-                  <li
-                    key={user.id}
-                    className="bg-white bg-opacity-25 p-4 rounded-lg shadow hover:shadow-md transition-shadow"
-                  >
-                    <p className="text-xl font-semibold text-gray-800">
-                      {user.username}
-                    </p>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-lg text-gray-200">No other users found.</p>
-            )}
-          </>
+            <p className="text-lg text-gray-200">Welcome to your dashboard!</p>
+          </div>
         )}
       </main>
     </div>

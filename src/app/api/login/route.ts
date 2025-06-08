@@ -21,7 +21,7 @@ export async function POST(request: Request) {
     const users = await db
       .select()
       .from(usersTable)
-      .where(eq(usersTable.name, username))
+      .where(eq(usersTable.username, username))
       .limit(1);
 
     if (users.length === 0) {
@@ -54,7 +54,7 @@ export async function POST(request: Request) {
       path: "/",
     });
     // Set username cookie
-    response.cookies.set("username", user.name, {
+    response.cookies.set("username", user.username, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
