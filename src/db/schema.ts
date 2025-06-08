@@ -49,10 +49,8 @@ export const studentRecordKeysTable = pgTable("student_record_keys", {
   createdAt: timestamp().notNull().defaultNow(),
 });
 
-// Used by advisors to access other students' records
-export const secretsTable = pgTable("secrets", {
+export const studentAdvisorsTable = pgTable("student_advisors", {
   advisorId: integer().references(() => usersTable.id),
   studentId: integer().references(() => usersTable.id),
-  key: text().notNull(),
   createdAt: timestamp().notNull().defaultNow(),
 });

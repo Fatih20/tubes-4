@@ -4,11 +4,12 @@ import { useRouter } from "next/navigation";
 import { API_BASE_URL } from "@/lib/config";
 import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
+import AdvisorDashboard from "@/components/AdvisorDashboard";
 
 interface User {
   id: number;
   username: string;
-  publicKey: string;
+  role: string;
 }
 
 interface FetchError extends Error {
@@ -49,10 +50,12 @@ export default function Home() {
     retry: 1,
   });
 
-  const username =
+  const currentUser =
     currentUserResponse && !("status" in currentUserResponse)
-      ? currentUserResponse.username
+      ? (currentUserResponse as User)
       : undefined;
+
+  const username = currentUser?.username;
 
   useEffect(() => {
     if (
@@ -149,10 +152,18 @@ export default function Home() {
           </div>
         ) : (
           <div className="py-10">
-            <h2 className="text-3xl font-semibold mb-6 text-gray-700">
-              Dashboard
-            </h2>
-            <p className="text-lg text-gray-200">Welcome to your dashboard!</p>
+            {currentUser?.role === "advisors" ? (
+              <AdvisorDashboard currentUser={currentUser} />
+            ) : (
+              <>
+                <h2 className="text-3xl font-semibold mb-6 text-gray-700">
+                  Dashboard
+                </h2>
+                <p className="text-lg text-gray-200">
+                  Welcome to your dashboard!
+                </p>
+              </>
+            )}
           </div>
         )}
       </main>

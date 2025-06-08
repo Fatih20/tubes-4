@@ -43,6 +43,13 @@
       "when": 1749376660619,
       "tag": "0005_freezing_king_cobra",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1749377984712,
+      "tag": "0006_young_tusk",
+      "breakpoints": true
     }
   ]
 }

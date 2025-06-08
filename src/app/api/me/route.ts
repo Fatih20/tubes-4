@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
+import db from "@/db";
+import { usersTable } from "@/db/schema";
+import { eq } from "drizzle-orm";
 
 export async function GET() {
   const cookieStore = await cookies();
@@ -11,10 +14,33 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  if (usernameCookie) {
-    return NextResponse.json({ username: usernameCookie.value });
-  } else {
+  if (!usernameCookie) {
     // This case should ideally not happen if login sets it correctly
     return NextResponse.json({ error: "Username not found" }, { status: 404 });
+  }
+
+  try {
+    // Get the full user information from the database
+    const user = await db
+      .select({
+        id: usersTable.id,
+        username: usersTable.username,
+        role: usersTable.role,
+      })
+      .from(usersTable)
+      .where(eq(usersTable.username, usernameCookie.value))
+      .limit(1);
+
+    if (user.length === 0) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    return NextResponse.json(user[0]);
+  } catch (error) {
+    console.error("Failed to fetch user:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
   }
 }

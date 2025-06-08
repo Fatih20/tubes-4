@@ -33,7 +33,7 @@ export async function POST(request: Request) {
     await db.insert(usersTable).values({
       username,
       password: hashedPassword,
-      role: "students",
+      role: "advisors",
     });
 
     return NextResponse.json(
