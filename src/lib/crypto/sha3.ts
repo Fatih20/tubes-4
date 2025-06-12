@@ -164,7 +164,6 @@ class SHA3 {
   }
 }
 
-// Public API
 export function sha3_256(input: Uint8Array | string): string {
   const sha3 = new SHA3(1088, 256); // rate = 1600 - 2*256 = 1088
   
@@ -189,26 +188,4 @@ export function sha3_512(input: Uint8Array | string): string {
   }
   
   return sha3.hexDigest();
-}
-
-// Test function
-export function testSHA3(): void {
-  console.log('Testing SHA-3 implementation...');
-  
-  const testCases = [
-    { input: '', expected: 'a7ffc6f8bf1ed76651c14756a061d662f580ff4de43b49fa82d80a4b80f8434a' },
-    { input: 'abc', expected: '3a985da74fe225b2045c172d6bd390bd855f086e3e9d525b46bfe24511431532' },
-    { input: 'hello', expected: '3338be694f50c5f338814986cdf0686453a888b84f424d792af4b9202398f392' }
-  ];
-  
-  testCases.forEach((testCase, index) => {
-    const result = sha3_256(testCase.input);
-    const passed = result === testCase.expected;
-    console.log(`Test ${index + 1}: ${passed ? 'PASS' : 'FAIL'}`);
-    if (!passed) {
-      console.log(`  Input: "${testCase.input}"`);
-      console.log(`  Expected: ${testCase.expected}`);
-      console.log(`  Got:      ${result}`);
-    }
-  });
 }
