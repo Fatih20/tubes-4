@@ -69,7 +69,7 @@ export const studentGradesTable = pgTable(
 );
 
 // todo student-advisor-keys table
-export const advisorStudentRequests = pgTable(
+export const advisorStudentRequestsTable = pgTable(
   "advisor_student_requests",
   {
     studentId: integer()
