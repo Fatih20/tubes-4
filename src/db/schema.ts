@@ -6,51 +6,85 @@ import {
   pgEnum,
   timestamp,
   real,
+  jsonb,
+  primaryKey,
+  boolean,
 } from "drizzle-orm/pg-core";
 
+// Enum for user roles
 export const usersRole = pgEnum("users_role", ["students", "advisors", "head"]);
 
+// Users table to store authentication and core user information
 export const usersTable = pgTable("users", {
-  id: integer().primaryKey().generatedAlwaysAsIdentity(),
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
   username: varchar({ length: 255 }).notNull(),
   password: text().notNull(),
-  role: usersRole("role").notNull().default("students"),
+  role: usersRole().notNull().default("students"),
+  encryptionKey: text(), // nullable, present for students, filled on registration
+  studentSharedKeys: jsonb(), // nullable, array of objects ({user_id, shared_key})
+  publicKey: text().notNull(), // generated on registration
+  privateKey: text().notNull(), // generated on registration
+  createdAt: timestamp().notNull().defaultNow(),
 });
 
+// Student records table, linked to the users table
 export const studentRecordsTable = pgTable("student_records", {
   userId: integer()
     .references(() => usersTable.id)
     .primaryKey(),
-  createdAt: timestamp().notNull().defaultNow(),
   nim: text().notNull().unique(),
+  createdAt: timestamp().notNull().defaultNow(),
   fullName: text().notNull(),
   gpa: real().notNull(),
+  digitalSignature: text(),
+  advisorId: integer().references(() => usersTable.id),
 });
 
-export const studentGradesTable = pgTable("student_grades", {
-  nim: text()
-    .references(() => studentRecordsTable.nim)
-    .primaryKey(),
-  createdAt: timestamp().notNull().defaultNow(),
-  grade: integer().notNull(),
-  courseCode: text().references(() => courseTable.code),
-});
-
+// Courses table
 export const courseTable = pgTable("courses", {
   code: text().primaryKey(),
   name: text().notNull(),
   credits: integer().notNull(),
 });
 
-// Should only be used by students in accessing their own records, advisors in accessing their students' records, and headmasters in accessing all records
-export const studentRecordKeysTable = pgTable("student_record_keys", {
-  key: text().notNull(),
-  studentId: integer().references(() => usersTable.id),
-  createdAt: timestamp().notNull().defaultNow(),
-});
+// Student grades table with a composite primary key
+export const studentGradesTable = pgTable(
+  "student_grades",
+  {
+    userId: integer()
+      .references(() => usersTable.id)
+      .notNull(),
+    courseCode: text()
+      .references(() => courseTable.code)
+      .notNull(),
+    grade: integer().notNull(),
+    createdAt: timestamp().notNull().defaultNow(),
+  },
+  (table) => {
+    return {
+      // Composite primary key consisting of userId and courseCode
+      pk: primaryKey({ columns: [table.userId, table.courseCode] }),
+    };
+  }
+);
 
-export const studentAdvisorsTable = pgTable("student_advisors", {
-  advisorId: integer().references(() => usersTable.id),
-  studentId: integer().references(() => usersTable.id),
-  createdAt: timestamp().notNull().defaultNow(),
-});
+// todo student-advisor-keys table
+export const advisorStudentRequests = pgTable(
+  "advisor_student_requests",
+  {
+    studentId: integer()
+      .references(() => usersTable.id)
+      .notNull(),
+    advisorId: integer()
+      .references(() => usersTable.id)
+      .notNull(),
+    advisorApproved: boolean().default(false),
+    collectedKeys: jsonb(),
+  },
+  (table) => {
+    return {
+      // Composite primary key consisting of userId and courseCode
+      pk: primaryKey({ columns: [table.studentId, table.advisorId] }),
+    };
+  }
+);

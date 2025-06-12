@@ -1,3 +1,11 @@
+import { createHash } from 'crypto';
+
+export function hashPasswordNode(password: string) {
+  const hash = createHash('sha256');
+  hash.update(password);
+  return hash.digest('hex');
+}
+
 export async function hashPassword(password: string): Promise<string> {
   const encoder = new TextEncoder();
   const data = encoder.encode(password);

@@ -7,8 +7,8 @@ const BIGINT_2 = BigInt(2);
 const BIGINT_3 = BigInt(3);
 const BIGINT_65537 = BigInt(65537); // Standard public exponent
 const MIN_KEY_SIZE = 2048;
-const MAX_PRIME_GENERATION_ATTEMPTS = 5000; 
-const MILLER_RABIN_ROUNDS = 20; 
+const MAX_PRIME_GENERATION_ATTEMPTS = 20000;
+const MILLER_RABIN_ROUNDS = 40; 
 
 export class RSAError extends Error {
   constructor(message: string) {
