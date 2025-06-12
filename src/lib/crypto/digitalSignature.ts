@@ -201,55 +201,12 @@ export const verifySignedRecord = (
 };
 
 /**
- * Generate a key pair specifically for the Program Study Head (Ketua Program Studi)
+ * Generate a key pair specifically for the Program Study Head
  */
 export const generateProgramStudyHeadKeys = (
-  bitLength: number = 2048,
+  bitLength: number = 2048, // Default to 2048 bits (must be at least 2048)
   departmentId: string = 'KAPRODI'
 ): RSAKeyPair => {
   const keyId = `${departmentId}-${Date.now()}`;
   return generateKeyPair(bitLength, keyId);
-};
-
-/**
- * Batch sign multiple records with the same private key
- * Useful for signing all course records at once with Program Study Head's key
- */
-export const batchSignRecords = (
-  records: DatabaseRecord[],
-  privateKey: RSAPrivateKey
-): SignedRecord[] => {
-  if (!Array.isArray(records) || records.length === 0) {
-    throw new DigitalSignatureError('Invalid records: must be a non-empty array');
-  }
-  
-  return records.map(record => createSignedRecord(record, privateKey, false));
-};
-
-/**
- * Batch verify multiple signed records using the same public key
- */
-export const batchVerifyRecords = (
-  signedRecords: SignedRecord[],
-  publicKey: RSAPublicKey
-): { record: DatabaseRecord; isValid: boolean; error?: string }[] => {
-  if (!Array.isArray(signedRecords) || signedRecords.length === 0) {
-    throw new DigitalSignatureError('Invalid signed records: must be a non-empty array');
-  }
-  
-  return signedRecords.map(signedRecord => {
-    try {
-      const isValid = verifySignedRecord(signedRecord, publicKey);
-      return {
-        record: signedRecord.record,
-        isValid
-      };
-    } catch (error) {
-      return {
-        record: signedRecord.record,
-        isValid: false,
-        error: String(error)
-      };
-    }
-  });
 };
