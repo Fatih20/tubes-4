@@ -36,10 +36,10 @@ export const studentRecordsTable = pgTable("student_records", {
     .references(() => usersTable.id)
     .primaryKey(),
   nim: text().notNull().unique(),
-  program: program().notNull(),
+  program: text().notNull(),
   createdAt: timestamp().notNull().defaultNow(),
   fullName: text().notNull(),
-  gpa: real().notNull(),
+  gpa: text().notNull(),
   digitalSignature: text(),
   advisorId: integer().references(() => usersTable.id),
 });
@@ -61,7 +61,7 @@ export const studentGradesTable = pgTable(
     courseCode: text()
       .references(() => courseTable.code)
       .notNull(),
-    grade: integer().notNull(),
+    grade: text().notNull(),
     createdAt: timestamp().notNull().defaultNow(),
   },
   (table) => {
@@ -92,3 +92,5 @@ export const advisorStudentRequestsTable = pgTable(
     };
   }
 );
+
+export type User = typeof usersTable.$inferSelect;

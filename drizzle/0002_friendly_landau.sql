@@ -1,0 +1,1 @@
+ALTER TABLE "student_records" ALTER COLUMN "program" SET DATA TYPE text;

@@ -15,6 +15,27 @@
       "when": 1749801733876,
       "tag": "0001_married_stryfe",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1749811112525,
+      "tag": "0002_friendly_landau",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1749812010174,
+      "tag": "0003_brown_juggernaut",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1749812071619,
+      "tag": "0004_high_gravity",
+      "breakpoints": true
     }
   ]
 }

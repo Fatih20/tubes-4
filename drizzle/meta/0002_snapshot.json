@@ -1,0 +1,399 @@
+{
+  "id": "c1d74b6b-2906-44c8-ab65-89c4a0ac374a",
+  "prevId": "ff3b25a3-be64-48c8-8c7c-48e4c515e652",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.advisor_student_requests": {
+      "name": "advisor_student_requests",
+      "schema": "",
+      "columns": {
+        "studentId": {
+          "name": "studentId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "advisorId": {
+          "name": "advisorId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "advisorApproved": {
+          "name": "advisorApproved",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false,
+          "default": false
+        },
+        "collectedKeys": {
+          "name": "collectedKeys",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "advisor_student_requests_studentId_users_id_fk": {
+          "name": "advisor_student_requests_studentId_users_id_fk",
+          "tableFrom": "advisor_student_requests",
+          "tableTo": "users",
+          "columnsFrom": [
+            "studentId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "advisor_student_requests_advisorId_users_id_fk": {
+          "name": "advisor_student_requests_advisorId_users_id_fk",
+          "tableFrom": "advisor_student_requests",
+          "tableTo": "users",
+          "columnsFrom": [
+            "advisorId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "advisor_student_requests_studentId_advisorId_pk": {
+          "name": "advisor_student_requests_studentId_advisorId_pk",
+          "columns": [
+            "studentId",
+            "advisorId"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.courses": {
+      "name": "courses",
+      "schema": "",
+      "columns": {
+        "code": {
+          "name": "code",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "credits": {
+          "name": "credits",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.student_grades": {
+      "name": "student_grades",
+      "schema": "",
+      "columns": {
+        "userId": {
+          "name": "userId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "courseCode": {
+          "name": "courseCode",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "grade": {
+          "name": "grade",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "student_grades_userId_users_id_fk": {
+          "name": "student_grades_userId_users_id_fk",
+          "tableFrom": "student_grades",
+          "tableTo": "users",
+          "columnsFrom": [
+            "userId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "student_grades_courseCode_courses_code_fk": {
+          "name": "student_grades_courseCode_courses_code_fk",
+          "tableFrom": "student_grades",
+          "tableTo": "courses",
+          "columnsFrom": [
+            "courseCode"
+          ],
+          "columnsTo": [
+            "code"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "student_grades_userId_courseCode_pk": {
+          "name": "student_grades_userId_courseCode_pk",
+          "columns": [
+            "userId",
+            "courseCode"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.student_records": {
+      "name": "student_records",
+      "schema": "",
+      "columns": {
+        "userId": {
+          "name": "userId",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "nim": {
+          "name": "nim",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "program": {
+          "name": "program",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "fullName": {
+          "name": "fullName",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "gpa": {
+          "name": "gpa",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "digitalSignature": {
+          "name": "digitalSignature",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "advisorId": {
+          "name": "advisorId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "student_records_userId_users_id_fk": {
+          "name": "student_records_userId_users_id_fk",
+          "tableFrom": "student_records",
+          "tableTo": "users",
+          "columnsFrom": [
+            "userId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "student_records_advisorId_users_id_fk": {
+          "name": "student_records_advisorId_users_id_fk",
+          "tableFrom": "student_records",
+          "tableTo": "users",
+          "columnsFrom": [
+            "advisorId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "student_records_nim_unique": {
+          "name": "student_records_nim_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "nim"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.users": {
+      "name": "users",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "users_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "username": {
+          "name": "username",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "password": {
+          "name": "password",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "role": {
+          "name": "role",
+          "type": "users_role",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'students'"
+        },
+        "program": {
+          "name": "program",
+          "type": "program",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "encryptionKey": {
+          "name": "encryptionKey",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "studentSharedKeys": {
+          "name": "studentSharedKeys",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "publicKey": {
+          "name": "publicKey",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "privateKey": {
+          "name": "privateKey",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {
+    "public.program": {
+      "name": "program",
+      "schema": "public",
+      "values": [
+        "IF",
+        "STI"
+      ]
+    },
+    "public.users_role": {
+      "name": "users_role",
+      "schema": "public",
+      "values": [
+        "students",
+        "advisors",
+        "head"
+      ]
+    }
+  },
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}
