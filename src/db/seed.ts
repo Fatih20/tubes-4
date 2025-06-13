@@ -68,6 +68,11 @@ async function seed() {
 
       return {
         username: seed.username,
+        program: (seed.username === "yudis"
+          ? "IF"
+          : seed.username === "baskara"
+          ? "STI"
+          : null) as "IF" | "STI" | null,
         role: seed.role as "students" | "advisors" | "head",
         password: hashPasswordNode("password"),
         privateKey: keyToPEM(key.privateKey),

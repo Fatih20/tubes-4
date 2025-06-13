@@ -14,12 +14,15 @@ import {
 // Enum for user roles
 export const usersRole = pgEnum("users_role", ["students", "advisors", "head"]);
 
+export const program = pgEnum("program", ["IF", "STI"]);
+
 // Users table to store authentication and core user information
 export const usersTable = pgTable("users", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
   username: varchar({ length: 255 }).notNull(),
   password: text().notNull(),
   role: usersRole().notNull().default("students"),
+  program: program(),
   encryptionKey: text(), // nullable, present for students, filled on registration
   studentSharedKeys: jsonb(), // nullable, array of objects ({user_id, shared_key})
   publicKey: text().notNull(), // generated on registration
@@ -33,6 +36,7 @@ export const studentRecordsTable = pgTable("student_records", {
     .references(() => usersTable.id)
     .primaryKey(),
   nim: text().notNull().unique(),
+  program: program().notNull(),
   createdAt: timestamp().notNull().defaultNow(),
   fullName: text().notNull(),
   gpa: real().notNull(),
