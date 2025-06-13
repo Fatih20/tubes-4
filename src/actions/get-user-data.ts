@@ -1,10 +1,3 @@
-// todo
-// get user data if exist
-// accept user id and key
-// the caller should ensure the key presence
-// also check for the signature validity here? can be here or in client side
-// also decrypt the data
-
 import db from "@/db";
 import { getUserById } from "./upload-user-data";
 import {
