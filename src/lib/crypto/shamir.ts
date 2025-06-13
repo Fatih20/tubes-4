@@ -236,7 +236,7 @@ export async function split(
   threshold: number
 ): Promise<Uint8Array[]> {
   // secret must be a non-empty Uint8Array
-  AssertArgument.instanceOf(secret, Uint8Array, "secret must be a Uint8Array");
+  // AssertArgument.instanceOf(secret, Uint8Array, "secret must be a Uint8Array");
   AssertArgument.greaterThanOrEqualTo(
     secret.byteLength,
     1,

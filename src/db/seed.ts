@@ -63,7 +63,7 @@ async function seed() {
       },
     ];
 
-    const users = initialData.map((seed) => {
+    const userSeeds = initialData.map((seed) => {
       const key = generateKeyPair();
 
       return {
@@ -91,7 +91,7 @@ async function seed() {
 
     // Insert Users
     console.log("Seeding users...");
-    await db.insert(usersTable).values(users).onConflictDoNothing();
+    await db.insert(usersTable).values(userSeeds).onConflictDoNothing();
 
     // Insert Courses
     console.log("Seeding courses...");
