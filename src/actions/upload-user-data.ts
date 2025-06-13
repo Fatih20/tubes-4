@@ -91,7 +91,7 @@ export const uploadStudentData = async (
   let totalCredit = 0;
 
   for (const grade of grades) {
-    signatureRecord[`grade-${grade.courseCode}`] = grade.grade;
+    signatureRecord[`grade-${grade.courseCode}`] = String(grade.grade);
 
     const course = courses.find((c) => c.code === grade.courseCode);
 
