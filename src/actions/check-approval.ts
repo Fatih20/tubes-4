@@ -1,9 +1,10 @@
 import db from "@/db";
 import { advisorStudentRequestsTable, usersTable } from "@/db/schema";
-import { threshold } from "@/db/secret-schema";
 import { eq, and } from "drizzle-orm";
 import { combine } from "@/lib/crypto/shamir";
 import { getStudentData } from "./get-user-data";
+
+const threshold = 3
 
 function hexToUint8Array(hex: string): Uint8Array {
   const buffer = Buffer.from(hex, "hex");
@@ -42,10 +43,10 @@ export const checkApproval = async (studentId: number, advisorId: number) => {
   }
 
   const currentRequest = request[0];
-  const collectedKeys = currentRequest.collectedKeys as {
+  const collectedKeys = [...new Set((currentRequest.collectedKeys as {
     student_id: number;
     share: string;
-  }[];
+  }[]).map(s => s.share))];
 
   // Check if both conditions are met:
   // 1. The student's advisor has approved
@@ -53,14 +54,10 @@ export const checkApproval = async (studentId: number, advisorId: number) => {
   const hasEnoughShares = collectedKeys.length >= threshold;
   const isApproved = currentRequest.advisorApproved && hasEnoughShares;
 
-  console.log(collectedKeys);
-
   if (isApproved) {
     try {
       // Convert the collected shares to Uint8Array format
-      const shares = collectedKeys.map((key) => hexToUint8Array(key.share));
-
-      console.log(shares);
+      const shares = collectedKeys.map((key) => hexToUint8Array(key));
 
       // Reconstruct the secret using Shamir's Secret Sharing
       const reconstructedSecret = await combine(shares);

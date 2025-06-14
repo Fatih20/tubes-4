@@ -2,9 +2,9 @@ import "dotenv/config";
 import db from "./index"; // Your configured Drizzle DB instance
 import { usersTable } from "./schema";
 import { eq } from "drizzle-orm";
-import { split } from "@/lib/crypto/shamir"; // Assuming this is your actual import
+import { combine, split } from "@/lib/crypto/shamir"; // Assuming this is your actual import
 
-export const threshold = 3;
+const threshold = 3;
 
 /**
  * Converts a hexadecimal string to a Uint8Array.
@@ -12,7 +12,8 @@ export const threshold = 3;
  * @returns The resulting Uint8Array.
  */
 function hexToUint8Array(hex: string): Uint8Array {
-  return Buffer.from(hex, "hex");
+  const buffer = Buffer.from(hex, "hex");
+  return new Uint8Array(buffer.buffer, buffer.byteOffset, buffer.byteLength);
 }
 
 /**
@@ -94,6 +95,17 @@ async function distributeKeys() {
         // Append the new share to the list for this advisor
         advisorSharesMap.get(advisor.id)?.push(shareForAdvisor);
       });
+
+      const hex = shares.map(uint8ArrayToHex)
+      hex.sort()
+      
+      // try to combine again for sanity check
+      const combined = await combine(hex.slice(0, 3).map(hexToUint8Array));
+
+      console.log("Original Encryption key:")
+      console.log(student.encryptionKey)
+      console.log("Combined encryption key")
+      console.log(uint8ArrayToHex(combined))
     }
 
     // 5. Update each advisor's record with their collected array of shares

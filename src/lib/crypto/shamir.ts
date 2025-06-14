@@ -198,9 +198,6 @@ function newCoordinates(): Readonly<Uint8Array> {
 // Helpers for declarative argument validation.
 const AssertArgument = {
   instanceOf(object: any, constructor: Function, message: string) {
-    console.log(object.constructor);
-    console.log(constructor);
-    console.log(object.constructor === constructor);
     if (object.constructor !== constructor) {
       throw new TypeError(message);
     }
@@ -316,7 +313,7 @@ export async function combine(shares: Uint8Array[]): Promise<Uint8Array> {
   // Shares must be a Uint8Array with at least 2 bytes and all shares must have the same byte length.
 
   const share1 = shares[0]!;
-  console.log(share1 instanceof Uint8Array);
+
   AssertArgument.instanceOf(
     share1,
     Uint8Array,
