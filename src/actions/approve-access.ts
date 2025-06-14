@@ -37,12 +37,12 @@ export const approveAccess = async (studentId: number, advisorId: number) => {
 
   // Get the advisor's shared key for this student
   const sharedKeys = advisor[0].studentSharedKeys as {
-    user_id: number;
-    shared_key: string;
+    student_id: number;
+    share: string;
   }[];
 
   const sharedKeyForStudent = sharedKeys.find(
-    (key) => key.user_id === studentId
+    (key) => key.student_id === studentId
   );
 
   if (!sharedKeyForStudent) {
@@ -53,27 +53,18 @@ export const approveAccess = async (studentId: number, advisorId: number) => {
   const existingRequest = await db
     .select()
     .from(advisorStudentRequestsTable)
-    .where(
-      and(
-        eq(advisorStudentRequestsTable.studentId, studentId),
-        eq(advisorStudentRequestsTable.advisorId, advisorId)
-      )
-    )
+    .where(and(eq(advisorStudentRequestsTable.studentId, studentId)))
     .limit(1);
-
-  if (!existingRequest.length) {
-    throw new Error("No access request found for this student-advisor pair");
-  }
 
   // Update the request with the new share and set advisorApproved if applicable
   const currentKeys =
     (existingRequest[0].collectedKeys as {
-      user_id: number;
-      shared_key: string;
+      student_id: number;
+      share: string;
     }[]) || [];
 
   // Check if this advisor's share is already in the collected keys
-  const shareExists = currentKeys.some((key) => key.user_id === advisorId);
+  const shareExists = currentKeys.some((key) => key.student_id === advisorId);
 
   if (shareExists) {
     throw new Error("Advisor has already contributed their share");
@@ -84,11 +75,14 @@ export const approveAccess = async (studentId: number, advisorId: number) => {
     .set({
       collectedKeys: [...currentKeys, sharedKeyForStudent],
       advisorApproved: isAdvisor || existingRequest[0].advisorApproved,
+      approverId: existingRequest[0].approverId
+        ? [...existingRequest[0].approverId, advisorId]
+        : [advisorId],
     })
     .where(
       and(
-        eq(advisorStudentRequestsTable.studentId, studentId),
-        eq(advisorStudentRequestsTable.advisorId, advisorId)
+        eq(advisorStudentRequestsTable.studentId, existingRequest[0].studentId),
+        eq(advisorStudentRequestsTable.advisorId, existingRequest[0].advisorId)
       )
     );
 

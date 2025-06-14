@@ -56,7 +56,19 @@ export default function Home() {
 
     switch (currentUser.role) {
       case "advisors":
-        return <AdvisorDashboard currentUser={currentUser} />;
+        return (
+          <div>
+            <AdvisorDashboard currentUser={currentUser} />
+            <div className="mt-6">
+              <a
+                href="/requests"
+                className="inline-block bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors"
+              >
+                View Pending Requests
+              </a>
+            </div>
+          </div>
+        );
 
       case "students":
         return <StudentDashboard currentUser={currentUser} />;

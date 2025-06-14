@@ -1,0 +1,1 @@
+ALTER TABLE "advisor_student_requests" ADD COLUMN "approverId" integer[];

@@ -64,6 +64,7 @@ export const requestAccess = async (studentId: number, advisorId: number) => {
       advisorId,
       advisorApproved: isAdvisor,
       collectedKeys: [sharedKeyForStudent],
+      approverId: [advisorId],
     });
   } else {
     // Update existing request

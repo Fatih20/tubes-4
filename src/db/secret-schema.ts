@@ -4,6 +4,8 @@ import { usersTable } from "./schema";
 import { eq } from "drizzle-orm";
 import { split } from "@/lib/crypto/shamir"; // Assuming this is your actual import
 
+export const threshold = 3;
+
 /**
  * Converts a hexadecimal string to a Uint8Array.
  * @param hex The hexadecimal string to convert.
@@ -46,7 +48,6 @@ async function distributeKeys() {
     }
 
     const sharesCount = advisors.length; // Total shares equal to the number of advisors
-    const threshold = 3; // Required shares to reconstruct the secret
 
     if (sharesCount < threshold) {
       console.error(
@@ -64,7 +65,7 @@ async function distributeKeys() {
       number,
       { student_id: number; share: string }[]
     >();
-    advisors.forEach(advisor => advisorSharesMap.set(advisor.id, []));
+    advisors.forEach((advisor) => advisorSharesMap.set(advisor.id, []));
 
     // 2. Iterate over each student to split their key and assign shares
     for (const student of students) {
@@ -75,7 +76,9 @@ async function distributeKeys() {
         continue;
       }
 
-      console.log(`Processing and splitting key for student: ${student.username}...`);
+      console.log(
+        `Processing and splitting key for student: ${student.username}...`
+      );
 
       // 3. Split the student's encryption key into shares
       const secretBytes = hexToUint8Array(student.encryptionKey);

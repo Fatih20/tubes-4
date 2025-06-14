@@ -9,6 +9,7 @@ import {
   jsonb,
   primaryKey,
   boolean,
+  PgArray,
 } from "drizzle-orm/pg-core";
 
 // Enum for user roles
@@ -83,6 +84,7 @@ export const advisorStudentRequestsTable = pgTable(
       .references(() => usersTable.id)
       .notNull(),
     advisorApproved: boolean().default(false),
+    approverId: integer().array(),
     collectedKeys: jsonb(),
   },
   (table) => {

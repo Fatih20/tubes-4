@@ -72,6 +72,8 @@ export const getStudentData = async (userId: number, encryptionKey: string) => {
     signatureRecord[`grade-${grade.courseCode}`] = grade.grade;
   }
 
+  console.log(decryptRecord);
+
   const programHead = await db
     .select()
     .from(usersTable)
@@ -109,5 +111,5 @@ export const getStudentData = async (userId: number, encryptionKey: string) => {
     grades: decryptGrades,
     verified,
     publicKey: programHead[0].publicKey, // just in case for validation in client
-  }
+  };
 };
