@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { API_BASE_URL } from "@/lib/config";
+import { useRouter } from "next/navigation";
 
 interface Student {
   id: number;
@@ -55,6 +56,7 @@ export default function AdvisorDashboard({
   currentUser,
 }: AdvisorDashboardProps) {
   const [activeTab, setActiveTab] = useState<"all" | "mine">("all");
+  const router = useRouter();
 
   const {
     data: allStudents,
@@ -103,7 +105,7 @@ export default function AdvisorDashboard({
   ) => {
     if (isLoading) {
       return (
-        <div className="py-10">
+        <div className="py-10 text-center">
           <p className="text-gray-600">Loading students...</p>
         </div>
       );
@@ -111,7 +113,7 @@ export default function AdvisorDashboard({
 
     if (error) {
       return (
-        <div className="py-10">
+        <div className="py-10 text-center">
           <p className="text-red-600 mb-4">Error: {error.message}</p>
           <button
             onClick={handleRefresh}
@@ -125,7 +127,7 @@ export default function AdvisorDashboard({
 
     if (!students || students.length === 0) {
       return (
-        <div className="py-10">
+        <div className="py-10 text-center">
           <p className="text-gray-600">No students found.</p>
         </div>
       );
@@ -151,6 +153,9 @@ export default function AdvisorDashboard({
               <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
                 Created At
               </th>
+              <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
+                Actions
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
@@ -171,6 +176,16 @@ export default function AdvisorDashboard({
                 <td className="py-4 px-4 text-sm text-gray-900">
                   {formatDate(student.createdAt)}
                 </td>
+                <td className="py-4 px-4 text-sm text-gray-900">
+                  {!student.advisorId && (
+                    <button
+                      onClick={() => router.push(`/records/${student.id}/add`)}
+                      className="bg-green-500 text-white py-1 px-3 rounded-lg hover:bg-green-600 transition duration-150 text-xs font-semibold"
+                    >
+                      Add Record
+                    </button>
+                  )}
+                </td>
               </tr>
             ))}
           </tbody>
@@ -185,8 +200,6 @@ export default function AdvisorDashboard({
         <h2 className="text-2xl font-semibold mb-4 text-gray-700">
           Student Management
         </h2>
-
-        {/* Tab Navigation */}
         <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg">
           <button
             onClick={() => setActiveTab("all")}
@@ -211,7 +224,6 @@ export default function AdvisorDashboard({
         </div>
       </div>
 
-      {/* Tab Content */}
       <div className="bg-white rounded-lg shadow-md">
         {activeTab === "all" ? (
           <div className="p-6">
