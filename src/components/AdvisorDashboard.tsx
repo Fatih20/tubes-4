@@ -16,6 +16,23 @@ interface Student {
   advisorId?: number;
 }
 
+interface StudentRecord {
+  studentRecord: {
+    userId: number;
+    nim: string;
+    program: string;
+    fullName: string;
+    gpa: string;
+  };
+  grades: Array<{
+    userId: number;
+    courseCode: string;
+    grade: string;
+  }>;
+  verified: boolean;
+  publicKey: string;
+}
+
 interface FetchError extends Error {
   status?: number;
 }
@@ -56,6 +73,8 @@ export default function AdvisorDashboard({
   currentUser,
 }: AdvisorDashboardProps) {
   const [activeTab, setActiveTab] = useState<"all" | "mine">("all");
+  const [selectedStudentRecord, setSelectedStudentRecord] =
+    useState<StudentRecord | null>(null);
   const router = useRouter();
 
   const {
@@ -79,6 +98,26 @@ export default function AdvisorDashboard({
     queryFn: () => fetchMyStudents(currentUser.id),
     retry: 1,
   });
+
+  const fetchStudentRecord = async (studentId: number) => {
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/api/student-data/${studentId}`
+      );
+      if (!response.ok) {
+        throw new Error(`Failed to fetch student record: ${response.status}`);
+      }
+      const data = await response.json();
+      console.log(data);
+      setSelectedStudentRecord(data);
+    } catch (error) {
+      console.error("Error fetching student record:", error);
+    }
+  };
+
+  const handleViewRecord = (studentId: number) => {
+    fetchStudentRecord(studentId);
+  };
 
   const handleRefresh = () => {
     if (activeTab === "all") {
@@ -147,6 +186,92 @@ export default function AdvisorDashboard({
       );
     }
 
+    if (selectedStudentRecord && activeTab === "mine") {
+      return (
+        <div className="p-6">
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="text-xl font-semibold text-gray-800">
+              Student Record
+            </h3>
+            <button
+              onClick={() => setSelectedStudentRecord(null)}
+              className="bg-gray-500 text-white py-2 px-4 rounded-lg hover:bg-gray-600 transition duration-150"
+            >
+              Back to List
+            </button>
+          </div>
+
+          <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h4 className="text-lg font-medium text-gray-700 mb-4">
+              Student Information
+            </h4>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-sm text-gray-600">Full Name</p>
+                <p className="font-medium text-gray-900">
+                  {selectedStudentRecord.studentRecord.fullName}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">NIM</p>
+                <p className="font-medium text-gray-900">
+                  {selectedStudentRecord.studentRecord.nim}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">Program</p>
+                <p className="font-medium text-gray-900">
+                  {selectedStudentRecord.studentRecord.program}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">GPA</p>
+                <p className="font-medium text-gray-900">
+                  {selectedStudentRecord.studentRecord.gpa}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <h4 className="text-lg font-medium text-gray-700 mb-4">
+              Course Grades
+            </h4>
+            {selectedStudentRecord.grades.length > 0 ? (
+              <div className="overflow-x-auto">
+                <table className="min-w-full bg-white border border-gray-200 rounded-lg">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
+                        Course Code
+                      </th>
+                      <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
+                        Grade
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    {selectedStudentRecord.grades.map((grade, index) => (
+                      <tr key={index} className="hover:bg-gray-50">
+                        <td className="py-4 px-4 text-sm text-gray-900">
+                          {grade.courseCode}
+                        </td>
+                        <td className="py-4 px-4 text-sm text-gray-900">
+                          {grade.grade}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <p className="text-gray-600">No grades available.</p>
+            )}
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="overflow-x-auto">
         <table className="min-w-full bg-white border border-gray-200 rounded-lg shadow-sm">
@@ -191,6 +316,14 @@ export default function AdvisorDashboard({
                   {formatDate(student.createdAt)}
                 </td>
                 <td className="py-4 px-4 text-sm text-gray-900">
+                  {student.advisorId === currentUser.id && (
+                    <button
+                      onClick={() => handleViewRecord(student.id)}
+                      className="bg-green-500 text-white py-1 px-3 rounded-lg hover:bg-green-600 transition duration-150 text-xs font-semibold"
+                    >
+                      View Record
+                    </button>
+                  )}
                   {!student.advisorId && (
                     <button
                       onClick={() => router.push(`/records/${student.id}/add`)}

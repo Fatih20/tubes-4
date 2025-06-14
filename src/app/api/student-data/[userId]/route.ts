@@ -22,7 +22,10 @@ export async function GET(
     }
 
     if (!usernameCookie) {
-      return NextResponse.json({ error: "Username not found" }, { status: 401 });
+      return NextResponse.json(
+        { error: "Username not found" },
+        { status: 401 }
+      );
     }
 
     // Get current authenticated user
@@ -38,7 +41,7 @@ export async function GET(
 
     // Parse and validate target user ID
     const targetUserId = parseInt(resolvedParams.userId);
-    
+
     if (isNaN(targetUserId)) {
       return NextResponse.json({ error: "Invalid user ID" }, { status: 400 });
     }
@@ -51,7 +54,10 @@ export async function GET(
       .limit(1);
 
     if (targetUser.length === 0) {
-      return NextResponse.json({ error: "Target user not found" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Target user not found" },
+        { status: 404 }
+      );
     }
 
     if (targetUser[0].role !== "students") {
@@ -106,7 +112,7 @@ export async function GET(
 
     // Determine encryption key based on user role
     let encryptionKey: string;
-    
+
     if (currentUser[0].role === "students") {
       // Students use their own encryption key
       if (!currentUser[0].encryptionKey) {
@@ -142,13 +148,18 @@ export async function GET(
       );
     }
 
+    console.log("Encryption key:", encryptionKey);
+
     // Attempt to get student academic data
     try {
       const data = await getStudentData(targetUserId, encryptionKey);
       return NextResponse.json(data);
     } catch (error) {
       // Handle case where student has no academic records yet
-      if (error instanceof Error && error.message.includes("Student record does not equal to 1")) {
+      if (
+        error instanceof Error &&
+        error.message.includes("Student record does not equal to 1")
+      ) {
         // Return empty transcript structure for students with no records
         const emptyTranscriptData = {
           studentRecord: {
@@ -162,16 +173,16 @@ export async function GET(
           verified: false,
           publicKey: "",
         };
-        
+
         return NextResponse.json(emptyTranscriptData);
       }
-      
+
       // Re-throw other errors
       throw error;
     }
-
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : "Internal server error";
+    const errorMessage =
+      error instanceof Error ? error.message : "Internal server error";
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
