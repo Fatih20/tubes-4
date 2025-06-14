@@ -1,8 +1,9 @@
+// src/components/StudentDashboard.tsx
 "use client";
 
 import { useState } from "react";
-// TODO: use API
-// import { useQuery } from "@tanstack/react-query";
+// TODO: Uncomment when ready to use real API
+import { useQuery } from "@tanstack/react-query";
 
 interface StudentDashboardProps {
   currentUser: {
@@ -38,7 +39,7 @@ interface FetchError extends Error {
   status?: number;
 }
 
-// TODO: Remove this when using API
+// TODO: Remove this when using real API
 const PLACEHOLDER_DATA: StudentDataResult = {
   studentRecord: {
     userId: 1,
@@ -56,7 +57,7 @@ const PLACEHOLDER_DATA: StudentDataResult = {
   publicKey: "placeholder_key",
 };
 
-// TODO: Replace with actual course
+// TODO: Replace with actual course data from database
 const COURSE_NAMES: Record<string, { name: string; credits: number }> = {
   "CS101": { name: "Introduction to Computer Science", credits: 3 },
   "MA201": { name: "Calculus I", credits: 4 },
@@ -70,12 +71,18 @@ const COURSE_NAMES: Record<string, { name: string; credits: number }> = {
   "PE101": { name: "Foundations of Physical Wellness", credits: 1 },
 };
 
-// TODO: Uncomment and use when API is ready
-/*
-const fetchStudentData = async (userId: number): Promise<StudentDataResult> => {
+const fetchStudentData = async (): Promise<StudentDataResult> => {
   try {
-    const response = await fetch(`/api/student-data/${userId}`, {
-      method: 'POST',
+    // First get the current user from /api/me
+    const userResponse = await fetch('/api/me');
+    if (!userResponse.ok) {
+      throw new Error('Failed to get current user');
+    }
+    const user = await userResponse.json();
+
+    // Then fetch their student data using the correct user ID
+    const response = await fetch(`/api/student-data/${user.id}`, {
+      method: 'GET',
       headers: {
         'Content-Type': 'application/json',
       },
@@ -89,35 +96,32 @@ const fetchStudentData = async (userId: number): Promise<StudentDataResult> => {
     const data = await response.json();
     return data;
   } catch (error) {
+    console.error("Error in fetchStudentData:", error);
     throw new Error(error instanceof Error ? error.message : 'Failed to fetch student data');
   }
 };
-*/
 
 export default function StudentDashboard({ currentUser }: StudentDashboardProps) {
-  // TODO: Replace placeholder data with API call
-  const studentData = PLACEHOLDER_DATA;
-  const isLoading = false;
-  const error: FetchError | null = null;
+  // Debug: Log the current user being passed to the component
+  console.log("StudentDashboard - Current User:", currentUser);
 
-  // TODO: Uncomment when using React Query
-  /*
   const {
     data: studentData,
     isLoading,
     error,
     refetch,
   } = useQuery<StudentDataResult, FetchError>({
-    queryKey: ["studentData", currentUser.id],
-    queryFn: () => fetchStudentData(currentUser.id),
+    queryKey: ["studentData"],
+    queryFn: fetchStudentData,
     retry: 1,
   });
-  */
 
   const handleRefresh = () => {
-    // TODO: Replace with actual refetch when using React Query
-    console.log("Refresh clicked - implement API refetch here");
-    // refetch();
+    try {
+      refetch();
+    } catch (error) {
+      console.error("Error refreshing data:", error);
+    }
   };
 
   const formatGrade = (grade: string) => {
@@ -161,7 +165,7 @@ export default function StudentDashboard({ currentUser }: StudentDashboardProps)
   };
 
   const getCourseInfo = (courseCode: string) => {
-    // TODO: Replace with actual database query to courses table
+    // TODO: Replace with actual database query to courses table when available
     return COURSE_NAMES[courseCode] || { name: courseCode, credits: 3 };
   };
 
@@ -174,7 +178,7 @@ export default function StudentDashboard({ currentUser }: StudentDashboardProps)
   };
 
   const renderTranscriptHeader = () => {
-    if (!studentData) return null;
+    if (!studentData?.studentRecord) return null;
 
     const { studentRecord, verified } = studentData;
 
@@ -185,20 +189,21 @@ export default function StudentDashboard({ currentUser }: StudentDashboardProps)
             <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">
               Student Name
             </label>
-            <p className="text-sm text-gray-900 font-medium">{studentRecord.fullName}</p>
+            <p className="text-sm text-gray-900 font-medium">{studentRecord?.fullName || 'N/A'}</p>
           </div>
           <div>
             <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">
               Student ID (NIM)
             </label>
-            <p className="text-sm text-gray-900 font-mono">{studentRecord.nim}</p>
+            <p className="text-sm text-gray-900 font-mono">{studentRecord?.nim || 'N/A'}</p>
           </div>
           <div>
             <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">
               Program
             </label>
             <p className="text-sm text-gray-900">
-              {studentRecord.program === 'IF' ? 'Informatics Engineering' : 'Information Systems and Technology'}
+              {studentRecord?.program === 'IF' ? 'Informatics Engineering' : 
+               studentRecord?.program === 'STI' ? 'Information Systems and Technology' : 'Unknown'}
             </p>
           </div>
         </div>
@@ -208,7 +213,7 @@ export default function StudentDashboard({ currentUser }: StudentDashboardProps)
             <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">
               GPA
             </label>
-            <p className="text-lg font-bold text-blue-600">{studentRecord.gpa}</p>
+            <p className="text-lg font-bold text-blue-600">{studentRecord?.gpa || '0.00'}</p>
           </div>
           <div>
             <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">
@@ -295,18 +300,18 @@ export default function StudentDashboard({ currentUser }: StudentDashboardProps)
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
-            {grades.map((grade, index) => {
-              const numericGrade = parseFloat(grade.grade);
+            {grades.map((grade: StudentGrade, index: number) => {
+              const numericGrade = parseFloat(grade?.grade || '0');
               const letterGrade = getLetterGrade(numericGrade);
-              const courseInfo = getCourseInfo(grade.courseCode);
+              const courseInfo = getCourseInfo(grade?.courseCode || '');
               
               return (
-                <tr key={`${grade.userId}-${grade.courseCode}`} className="hover:bg-gray-50">
+                <tr key={`${grade?.userId || index}-${grade?.courseCode || index}`} className="hover:bg-gray-50">
                   <td className="py-4 px-4 text-sm text-gray-900 text-center">
                     {index + 1}
                   </td>
                   <td className="py-4 px-4 text-sm text-gray-900 font-medium text-center">
-                    {grade.courseCode}
+                    {grade?.courseCode || 'N/A'}
                   </td>
                   <td className="py-4 px-4 text-sm text-gray-900">
                     {courseInfo.name}
@@ -316,7 +321,7 @@ export default function StudentDashboard({ currentUser }: StudentDashboardProps)
                   </td>
                   <td className="py-4 px-4 text-sm text-gray-900 text-center">
                     <div className="flex flex-col items-center space-y-1">
-                      <span className="font-mono">{formatGrade(grade.grade)}</span>
+                      <span className="font-mono">{formatGrade(grade?.grade || '0')}</span>
                       <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                         getGradeColor(letterGrade)
                       }`}>
