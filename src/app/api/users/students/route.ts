@@ -54,12 +54,10 @@ export async function GET() {
         fullName: studentRecordsTable.fullName,
         gpa: studentRecordsTable.gpa,
         createdAt: studentRecordsTable.createdAt,
+        advisorId: studentRecordsTable.advisorId,
       })
-      .from(usersTable)
-      .leftJoin(
-        studentRecordsTable,
-        eq(usersTable.id, studentRecordsTable.userId)
-      )
+      .from(studentRecordsTable)
+      .rightJoin(usersTable, eq(studentRecordsTable.userId, usersTable.id))
       .where(eq(usersTable.role, "students"));
 
     return NextResponse.json(studentsWithRecords);

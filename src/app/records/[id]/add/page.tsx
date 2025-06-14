@@ -11,7 +11,6 @@ import { useEffect } from "react";
 // Zod schema for form validation
 const studentRecordSchema = z.object({
   userData: z.object({
-    // userId is now derived from the URL, but still part of the form data
     userId: z.coerce.number().int().positive(),
     nim: z.string().min(1, "NIM is required"),
     program: z.enum(["IF", "STI"]),
@@ -41,10 +40,14 @@ const fetchCourses = async (): Promise<Course[]> => {
   return response.json();
 };
 
-// The component now accepts params for the dynamic route
-const AddStudentRecordPage = ({ params }: { params: { id: string } }) => {
+const AddStudentRecordPage = async ({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) => {
   const router = useRouter();
-  const studentId = parseInt(params.id, 10);
+
+  const awaited = await params;
 
   const {
     register,
@@ -54,10 +57,9 @@ const AddStudentRecordPage = ({ params }: { params: { id: string } }) => {
     setValue,
   } = useForm<StudentRecordInput>({
     resolver: zodResolver(studentRecordSchema),
-    // Set default values, including the studentId from the URL
     defaultValues: {
       userData: {
-        userId: studentId,
+        userId: 0, // Initialize with a placeholder value
         nim: "",
         program: "IF",
         fullName: "",
@@ -66,10 +68,13 @@ const AddStudentRecordPage = ({ params }: { params: { id: string } }) => {
     },
   });
 
-  // Ensure userId is correctly set if the component re-renders
+  // This useEffect hook now safely handles the studentId from params.
   useEffect(() => {
-    setValue("userData.userId", studentId);
-  }, [studentId, setValue]);
+    const studentId = parseInt(awaited.id, 10);
+    if (!isNaN(studentId)) {
+      setValue("userData.userId", studentId, { shouldValidate: true });
+    }
+  }, [awaited.id, setValue]);
 
   const { fields, append, remove } = useFieldArray({
     control,
@@ -109,29 +114,37 @@ const AddStudentRecordPage = ({ params }: { params: { id: string } }) => {
     mutation.mutate(data);
   };
 
+  const inputStyle =
+    "mt-1 block w-full bg-white bg-opacity-70 border border-white border-opacity-30 rounded-md shadow-sm text-gray-900 p-2 focus:ring-2 focus:ring-purple-400 focus:border-purple-400 placeholder-gray-600";
+  const disabledInputStyle =
+    "mt-1 block w-full bg-gray-200 bg-opacity-50 border-transparent rounded-md shadow-sm text-gray-700 p-2 cursor-not-allowed";
+
   return (
-    <div className="min-h-screen w-full flex flex-col items-center bg-gradient-to-br from-gray-800 to-gray-900 p-4 text-white">
-      <header className="w-full max-w-4xl flex justify-between items-center py-4 px-2 md:px-0 mb-6">
-        <h1 className="text-3xl font-bold">Add Student Record</h1>
+    <div className="min-h-screen w-full flex flex-col items-center bg-gradient-to-br from-purple-600 to-blue-500 p-4">
+      <header className="w-full max-w-6xl flex justify-between items-center py-4 px-2 md:px-0 mb-6">
+        <h1 className="text-2xl sm:text-3xl font-bold text-white">
+          Add Student Record
+        </h1>
         <button
           onClick={() => router.push("/")}
-          className="bg-gray-600 text-white py-2 px-5 rounded-lg font-semibold hover:bg-gray-700 transition"
+          className="bg-blue-500 text-white py-2 px-4 sm:py-2 sm:px-5 rounded-lg font-semibold hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-75 transition duration-150 ease-in-out shadow-md hover:shadow-lg whitespace-nowrap"
         >
           Back to Dashboard
         </button>
       </header>
 
-      <main className="bg-white bg-opacity-10 backdrop-filter backdrop-blur-lg p-8 rounded-xl shadow-2xl max-w-4xl w-full">
+      <main className="bg-white bg-opacity-20 backdrop-filter backdrop-blur-lg p-6 sm:p-8 rounded-xl shadow-2xl max-w-6xl w-full">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          <div className="border-b border-gray-400 pb-6">
-            <h2 className="text-xl font-semibold mb-4 text-gray-200">
+          {/* Student Information Section */}
+          <div className="border-b border-white border-opacity-30 pb-6">
+            <h2 className="text-xl font-semibold mb-4 text-slate-800">
               Student Information
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label
                   htmlFor="userId"
-                  className="block text-sm font-medium text-gray-300"
+                  className="block text-sm font-medium text-slate-700"
                 >
                   Student ID
                 </label>
@@ -139,24 +152,24 @@ const AddStudentRecordPage = ({ params }: { params: { id: string } }) => {
                   id="userId"
                   type="number"
                   {...register("userData.userId")}
-                  className="mt-1 block w-full bg-gray-900 border-gray-700 rounded-md shadow-sm text-gray-400 p-2 cursor-not-allowed"
-                  disabled // Make the field read-only
+                  className={disabledInputStyle}
+                  disabled
                 />
               </div>
               <div>
                 <label
                   htmlFor="nim"
-                  className="block text-sm font-medium text-gray-300"
+                  className="block text-sm font-medium text-slate-700"
                 >
                   NIM
                 </label>
                 <input
                   id="nim"
                   {...register("userData.nim")}
-                  className="mt-1 block w-full bg-gray-700 border-gray-600 rounded-md shadow-sm text-white p-2"
+                  className={inputStyle}
                 />
                 {errors.userData?.nim && (
-                  <p className="text-red-400 text-sm mt-1">
+                  <p className="text-red-800 text-sm mt-1">
                     {errors.userData.nim.message}
                   </p>
                 )}
@@ -164,17 +177,17 @@ const AddStudentRecordPage = ({ params }: { params: { id: string } }) => {
               <div>
                 <label
                   htmlFor="fullName"
-                  className="block text-sm font-medium text-gray-300"
+                  className="block text-sm font-medium text-slate-700"
                 >
                   Full Name
                 </label>
                 <input
                   id="fullName"
                   {...register("userData.fullName")}
-                  className="mt-1 block w-full bg-gray-700 border-gray-600 rounded-md shadow-sm text-white p-2"
+                  className={inputStyle}
                 />
                 {errors.userData?.fullName && (
-                  <p className="text-red-400 text-sm mt-1">
+                  <p className="text-red-800 text-sm mt-1">
                     {errors.userData.fullName.message}
                   </p>
                 )}
@@ -182,20 +195,24 @@ const AddStudentRecordPage = ({ params }: { params: { id: string } }) => {
               <div>
                 <label
                   htmlFor="program"
-                  className="block text-sm font-medium text-gray-300"
+                  className="block text-sm font-medium text-slate-700"
                 >
                   Program
                 </label>
                 <select
                   id="program"
                   {...register("userData.program")}
-                  className="mt-1 block w-full bg-gray-700 border-gray-600 rounded-md shadow-sm text-white p-2"
+                  className={inputStyle}
                 >
-                  <option value="IF">Informatics</option>
-                  <option value="STI">Information Systems</option>
+                  <option value="IF" className="text-black">
+                    Informatics
+                  </option>
+                  <option value="STI" className="text-black">
+                    Information Systems
+                  </option>
                 </select>
                 {errors.userData?.program && (
-                  <p className="text-red-400 text-sm mt-1">
+                  <p className="text-red-800 text-sm mt-1">
                     {errors.userData.program.message}
                   </p>
                 )}
@@ -203,49 +220,56 @@ const AddStudentRecordPage = ({ params }: { params: { id: string } }) => {
             </div>
           </div>
 
+          {/* Grades Section */}
           <div>
-            <h2 className="text-xl font-semibold mb-4 text-gray-200">Grades</h2>
+            <h2 className="text-xl font-semibold mb-4 text-slate-800">
+              Grades
+            </h2>
             {fields.map((field, index) => (
               <div
                 key={field.id}
-                className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center mb-4 p-4 bg-white bg-opacity-5 rounded-lg"
+                className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center mb-4 p-4 rounded-lg"
               >
                 <div className="md:col-span-1">
-                  <label className="block text-sm font-medium text-gray-300">
+                  <label className="block text-sm font-medium text-slate-700">
                     Course
                   </label>
                   <select
                     {...register(`grades.${index}.courseCode`)}
-                    className="mt-1 block w-full bg-gray-700 border-gray-600 rounded-md shadow-sm text-white p-2"
+                    className={inputStyle}
                     disabled={isLoadingCourses}
                   >
-                    <option value="">
+                    <option value="" className="text-gray-500">
                       {isLoadingCourses ? "Loading..." : "Select a course"}
                     </option>
                     {courses.map((course) => (
-                      <option key={course.code} value={course.code}>
+                      <option
+                        key={course.code}
+                        value={course.code}
+                        className="text-black"
+                      >
                         {course.code} - {course.name}
                       </option>
                     ))}
                   </select>
                   {errors.grades?.[index]?.courseCode && (
-                    <p className="text-red-400 text-sm mt-1">
+                    <p className="text-red-800 text-sm mt-1">
                       {errors.grades[index]?.courseCode?.message}
                     </p>
                   )}
                 </div>
                 <div className="md:col-span-1">
-                  <label className="block text-sm font-medium text-gray-300">
+                  <label className="block text-sm font-medium text-slate-700">
                     Grade
                   </label>
                   <input
                     type="number"
                     step="0.01"
                     {...register(`grades.${index}.grade`)}
-                    className="mt-1 block w-full bg-gray-700 border-gray-600 rounded-md shadow-sm text-white p-2"
+                    className={inputStyle}
                   />
                   {errors.grades?.[index]?.grade && (
-                    <p className="text-red-400 text-sm mt-1">
+                    <p className="text-red-800 text-sm mt-1">
                       {errors.grades[index]?.grade?.message}
                     </p>
                   )}
@@ -254,7 +278,7 @@ const AddStudentRecordPage = ({ params }: { params: { id: string } }) => {
                   <button
                     type="button"
                     onClick={() => remove(index)}
-                    className="bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 transition"
+                    className="bg-red-500 text-white py-2 px-4 rounded-lg font-semibold hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-75 transition duration-150 ease-in-out shadow-md"
                   >
                     Remove
                   </button>
@@ -264,17 +288,18 @@ const AddStudentRecordPage = ({ params }: { params: { id: string } }) => {
             <button
               type="button"
               onClick={() => append({ courseCode: "", grade: 0 })}
-              className="mt-2 bg-blue-600 text-white py-2 px-4 rounded-lg font-semibold hover:bg-blue-700 transition"
+              className="mt-2 bg-purple-500 text-white py-2 px-4 rounded-lg font-semibold hover:bg-purple-600 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-75 transition duration-150 ease-in-out shadow-md"
             >
               Add Grade
             </button>
           </div>
 
+          {/* Submit Button */}
           <div className="flex justify-end pt-4">
             <button
               type="submit"
               disabled={mutation.isPending}
-              className="bg-green-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-75 transition disabled:opacity-50"
+              className="w-full sm:w-auto bg-green-500 text-white py-3 px-6 rounded-lg font-semibold hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-75 transition duration-150 ease-in-out shadow-md hover:shadow-lg disabled:opacity-50"
             >
               {mutation.isPending ? "Submitting..." : "Submit Record"}
             </button>

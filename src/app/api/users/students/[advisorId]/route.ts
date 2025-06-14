@@ -6,7 +6,7 @@ import { eq } from "drizzle-orm";
 
 export async function GET(
   request: Request,
-  { params }: { params: { advisorId: string } }
+  { params }: { params: Promise<{ advisorId: string }> }
 ) {
   try {
     const cookieStore = await cookies();
@@ -48,7 +48,7 @@ export async function GET(
     }
 
     // Parse and validate advisorId
-    const advisorId = parseInt(params.advisorId);
+    const advisorId = parseInt((await params).advisorId);
     if (isNaN(advisorId)) {
       return NextResponse.json(
         { error: "Invalid advisor ID" },

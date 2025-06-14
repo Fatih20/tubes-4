@@ -70,7 +70,7 @@ export const uploadStudentData = async (
   const userKey = student.encryptionKey;
 
   if (!userKey) {
-    throw new Error("Encryption key for student not found")
+    throw new Error("Encryption key for student not found");
   }
 
   const advisor = await getUserById(advisorId);
@@ -103,8 +103,9 @@ export const uploadStudentData = async (
     totalCredit += course.credits;
   }
 
-  const gpa =
-    String(totalCredit === 0 ? 0 : Math.round((totalGrade * 100) / totalCredit) / 100);
+  const gpa = String(
+    totalCredit === 0 ? 0 : Math.round((totalGrade * 100) / totalCredit) / 100
+  );
 
   signatureRecord["gpa"] = gpa;
 
@@ -122,34 +123,35 @@ export const uploadStudentData = async (
     );
   }
 
-  const headPrivateKey = keyFromPEM(programHead[0].privateKey) as RSAPrivateKey
+  const headPrivateKey = keyFromPEM(programHead[0].privateKey) as RSAPrivateKey;
 
-  const {record: dbRecord, ...signature} = createSignedRecord(signatureRecord, headPrivateKey);
+  const { record: dbRecord, ...signature } = createSignedRecord(
+    signatureRecord,
+    headPrivateKey
+  );
 
-  const signatureString = JSON.stringify(signature)
-  
-  return await db.transaction(async (tx) => {
-    await tx.insert(studentRecordsTable).values({
-      userId: input.userData.userId,
-      nim: encryptString(input.userData.nim, userKey),
-      program: encryptString(input.userData.program, userKey),
-      fullName: encryptString(input.userData.fullName, userKey),
-      gpa: encryptString(gpa, userKey),
-      digitalSignature: signatureString,
-      advisorId: advisorId,
-    });
+  const signatureString = JSON.stringify(signature);
 
-    if (grades.length > 0) {
-      const encryptedGrades = await Promise.all(
-        grades.map(async (grade) => ({
-          userId: input.userData.userId,
-          courseCode: grade.courseCode,
-          grade: encryptString(grade.grade.toString(), userKey),
-        }))
-      );
-      await tx.insert(studentGradesTable).values(encryptedGrades);
-    }
-
-    return;
+  await db.insert(studentRecordsTable).values({
+    userId: input.userData.userId,
+    nim: encryptString(input.userData.nim, userKey),
+    program: encryptString(input.userData.program, userKey),
+    fullName: encryptString(input.userData.fullName, userKey),
+    gpa: encryptString(gpa, userKey),
+    digitalSignature: signatureString,
+    advisorId: advisorId,
   });
+
+  if (grades.length > 0) {
+    const encryptedGrades = await Promise.all(
+      grades.map(async (grade) => ({
+        userId: input.userData.userId,
+        courseCode: grade.courseCode,
+        grade: encryptString(grade.grade.toString(), userKey),
+      }))
+    );
+    await db.insert(studentGradesTable).values(encryptedGrades);
+  }
+
+  return;
 };

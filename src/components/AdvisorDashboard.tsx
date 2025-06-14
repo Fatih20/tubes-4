@@ -93,9 +93,23 @@ export default function AdvisorDashboard({
     return new Date(dateString).toLocaleDateString();
   };
 
-  const formatGPA = (gpa: number | null) => {
-    if (gpa === null) return "N/A";
-    return gpa.toFixed(2);
+  const formatGPA = (gpa: number | string | null): string => {
+    // Handles null, undefined, or empty strings
+    if (gpa === null || gpa === undefined || gpa === "") {
+      return "N/A";
+    }
+
+    // Convert input to a number. Handles both actual numbers and string numbers.
+    const numericGpa = Number(gpa);
+
+    // If the conversion results in NaN (e.g., for a random string like "abc"),
+    // return "N/A".
+    if (isNaN(numericGpa)) {
+      return String(gpa);
+    }
+
+    // If it's a valid number, format it to two decimal places.
+    return numericGpa.toFixed(2);
   };
 
   const renderStudentsTable = (
