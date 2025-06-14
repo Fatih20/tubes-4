@@ -2,33 +2,27 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { getStudentData } from "@/actions/get-user-data";
 import db from "@/db";
-import { usersTable, studentRecordsTable } from "@/db/schema";
-import { eq, and } from "drizzle-orm";
+import { usersTable } from "@/db/schema";
+import { eq } from "drizzle-orm";
 
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
-    // Await the params object
     const resolvedParams = await params;
     const cookieStore = await cookies();
     const sessionCookie = cookieStore.get("session");
     const usernameCookie = cookieStore.get("username");
 
-    // Check authentication
     if (!sessionCookie || sessionCookie.value !== "authenticated") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     if (!usernameCookie) {
-      return NextResponse.json(
-        { error: "Username not found" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Username not found" }, { status: 401 });
     }
 
-    // Get current authenticated user
     const currentUser = await db
       .select()
       .from(usersTable)
@@ -39,14 +33,27 @@ export async function GET(
       return NextResponse.json({ error: "User not found" }, { status: 401 });
     }
 
-    // Parse and validate target user ID
     const targetUserId = parseInt(resolvedParams.userId);
-
+    
     if (isNaN(targetUserId)) {
       return NextResponse.json({ error: "Invalid user ID" }, { status: 400 });
     }
 
-    // Verify target user exists and is a student
+    if (currentUser[0].role === "students") {
+      if (currentUser[0].id !== targetUserId) {
+        return NextResponse.json(
+          { error: "Students can only access their own transcript" },
+          { status: 403 }
+        );
+      }
+    } else if (currentUser[0].role === "advisors") {
+      console.log(`Advisor ${currentUser[0].id} accessing student ${targetUserId}`);
+    } else if (currentUser[0].role === "head") {
+      console.log(`Head ${currentUser[0].id} accessing student ${targetUserId}`);
+    } else {
+      return NextResponse.json({ error: "Invalid user role" }, { status: 403 });
+    }
+
     const targetUser = await db
       .select()
       .from(usersTable)
@@ -54,10 +61,7 @@ export async function GET(
       .limit(1);
 
     if (targetUser.length === 0) {
-      return NextResponse.json(
-        { error: "Target user not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Target user not found" }, { status: 404 });
     }
 
     if (targetUser[0].role !== "students") {
@@ -67,54 +71,9 @@ export async function GET(
       );
     }
 
-    // Role-based access control
-    if (currentUser[0].role === "students") {
-      // Students can only access their own data
-      if (currentUser[0].id !== targetUserId) {
-        return NextResponse.json(
-          { error: "Students can only access their own transcript" },
-          { status: 403 }
-        );
-      }
-    } else if (currentUser[0].role === "head") {
-      // Heads can access any student in their program
-      if (!currentUser[0].program) {
-        return NextResponse.json(
-          { error: "Program head must have a program assigned" },
-          { status: 400 }
-        );
-      }
-
-      // Check if the target student is in the same program as the head
-      const studentRecord = await db
-        .select()
-        .from(studentRecordsTable)
-        .where(eq(studentRecordsTable.userId, targetUserId))
-        .limit(1);
-
-      if (studentRecord.length > 0) {
-        // If student has records, check if they're in the same program
-        const studentProgram = studentRecord[0].program;
-        if (studentProgram !== currentUser[0].program) {
-          return NextResponse.json(
-            { error: "You can only access students in your program" },
-            { status: 403 }
-          );
-        }
-      }
-      // If no student records yet, allow access (they might be a new student)
-    } else if (currentUser[0].role === "advisors") {
-      // TODO: Implement advisor-student relationship check or SSSS group access
-      // For now, allow access for development
-    } else {
-      return NextResponse.json({ error: "Invalid user role" }, { status: 403 });
-    }
-
-    // Determine encryption key based on user role
     let encryptionKey: string;
-
+    
     if (currentUser[0].role === "students") {
-      // Students use their own encryption key
       if (!currentUser[0].encryptionKey) {
         return NextResponse.json(
           { error: "Student encryption key not found" },
@@ -122,18 +81,8 @@ export async function GET(
         );
       }
       encryptionKey = currentUser[0].encryptionKey;
-    } else if (currentUser[0].role === "head") {
-      // Program heads use their own encryption key to decrypt student data
-      if (!currentUser[0].encryptionKey) {
-        return NextResponse.json(
-          { error: "Head encryption key not found" },
-          { status: 404 }
-        );
-      }
-      encryptionKey = currentUser[0].encryptionKey;
-    } else if (currentUser[0].role === "advisors") {
-      // TODO: Implement SSSS key reconstruction for group access
-      // For now, use the target student's encryption key
+    } else if (currentUser[0].role === "head" || currentUser[0].role === "advisors") {
+      // Both heads and advisors use the target student's encryption key
       if (!targetUser[0].encryptionKey) {
         return NextResponse.json(
           { error: "Student encryption key not found" },
@@ -148,24 +97,18 @@ export async function GET(
       );
     }
 
-    console.log("Encryption key:", encryptionKey);
-
-    // Attempt to get student academic data
     try {
       const data = await getStudentData(targetUserId, encryptionKey);
       return NextResponse.json(data);
     } catch (error) {
-      // Handle case where student has no academic records yet
-      if (
-        error instanceof Error &&
-        error.message.includes("Student record does not equal to 1")
-      ) {
-        // Return empty transcript structure for students with no records
-        const emptyTranscriptData = {
+      if (error instanceof Error && error.message.includes("Student record does not equal to 1")) {
+        console.log(`No student data found for user ${targetUserId}, returning placeholder data`);
+        
+        const placeholderData = {
           studentRecord: {
             userId: targetUserId,
-            nim: "Not Available",
-            program: currentUser[0].program || "Unknown", // Use head's program as default
+            nim: "00000000",
+            program: "Unknown",
             fullName: targetUser[0].username,
             gpa: "0.00",
           },
@@ -173,16 +116,16 @@ export async function GET(
           verified: false,
           publicKey: "",
         };
-
-        return NextResponse.json(emptyTranscriptData);
+        
+        return NextResponse.json(placeholderData);
       }
-
-      // Re-throw other errors
+      
       throw error;
     }
+
   } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Internal server error";
+    console.error("Failed to fetch student data:", error);
+    const errorMessage = error instanceof Error ? error.message : "Internal server error";
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
