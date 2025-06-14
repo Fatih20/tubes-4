@@ -3,72 +3,27 @@
 import { useRouter } from "next/navigation";
 import { API_BASE_URL } from "@/lib/config";
 import { useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
 import AdvisorDashboard from "@/components/AdvisorDashboard";
 import StudentDashboard from "@/components/StudentDashboard";
 import HeadDashboard from "@/components/HeadDashboard";
-
-interface User {
-  id: number;
-  username: string;
-  role: string;
-  program?: string; // Add program field for heads
-}
-
-interface FetchError extends Error {
-  status?: number;
-}
-
-interface ApiErrorResponse {
-  status: number;
-  error: string;
-}
-
-const fetchCurrentUser = async () => {
-  const response = await fetch(`${API_BASE_URL}/api/me`);
-  if (!response.ok) {
-    if (response.status === 401) {
-      return { status: 401, error: "Unauthorized" };
-    }
-    const errorText = await response.text();
-    throw new Error(
-      `Failed to fetch current user: ${response.status} ${errorText}`
-    );
-  }
-  return response.json();
-};
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 
 export default function Home() {
   const router = useRouter();
-
   const {
-    data: currentUserResponse,
-    isLoading: isLoadingCurrentUser,
-    error: currentUserError,
-    refetch: refetchCurrentUser,
-    isError: isCurrentUserError,
-  } = useQuery<User | ApiErrorResponse, FetchError>({
-    queryKey: ["currentUser"],
-    queryFn: fetchCurrentUser,
-    retry: 1,
-  });
-
-  const currentUser =
-    currentUserResponse && !("status" in currentUserResponse)
-      ? (currentUserResponse as User)
-      : undefined;
+    currentUser,
+    isLoadingCurrentUser,
+    primaryError,
+    refetchCurrentUser,
+  } = useCurrentUser();
 
   const username = currentUser?.username;
 
   useEffect(() => {
-    if (
-      currentUserResponse &&
-      "status" in currentUserResponse &&
-      currentUserResponse.status === 401
-    ) {
+    if (currentUser === undefined && !isLoadingCurrentUser) {
       router.push("/login");
     }
-  }, [currentUserResponse, router]);
+  }, [currentUser, isLoadingCurrentUser, router]);
 
   async function handleLogout(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -95,28 +50,6 @@ export default function Home() {
     refetchCurrentUser();
   };
 
-  const getErrorMessage = (
-    queryError: FetchError | ApiErrorResponse | null | undefined,
-    defaultMessage: string
-  ): string | null => {
-    if (!queryError) return null;
-    if (queryError instanceof Error) {
-      return queryError.message;
-    }
-    if (
-      typeof queryError === "object" &&
-      "error" in queryError &&
-      typeof queryError.error === "string"
-    ) {
-      return queryError.error;
-    }
-    return defaultMessage;
-  };
-
-  const primaryError = isCurrentUserError
-    ? getErrorMessage(currentUserError, "Failed to load your profile.")
-    : null;
-
   // Render dashboard content based on user role
   const renderDashboardContent = () => {
     if (!currentUser) return null;
@@ -124,13 +57,13 @@ export default function Home() {
     switch (currentUser.role) {
       case "advisors":
         return <AdvisorDashboard currentUser={currentUser} />;
-      
+
       case "students":
         return <StudentDashboard currentUser={currentUser} />;
-      
+
       case "head":
         return <HeadDashboard currentUser={currentUser} />;
-      
+
       default:
         return (
           <>
@@ -180,11 +113,9 @@ export default function Home() {
             >
               Try Again
             </button>
-            </div>
-        ) : (
-          <div className="py-4">
-            {renderDashboardContent()}
           </div>
+        ) : (
+          <div className="py-4">{renderDashboardContent()}</div>
         )}
       </main>
     </div>

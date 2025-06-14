@@ -127,6 +127,35 @@ export default function AdvisorDashboard({
     }
   };
 
+  const handleRequestAccess = async (studentId: number) => {
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/api/access-requests/request`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            studentId,
+            advisorId: currentUser.id,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to request access");
+      }
+
+      // Navigate to the request access page after successful request
+      router.push(`/records/${studentId}/request-access`);
+    } catch (error) {
+      console.error("Error requesting access:", error);
+      alert((error as Error).message || "Failed to request access");
+    }
+  };
+
   const formatDate = (dateString: string | null) => {
     if (!dateString) return "N/A";
     return new Date(dateString).toLocaleDateString();
@@ -332,6 +361,15 @@ export default function AdvisorDashboard({
                       Add Record
                     </button>
                   )}
+                  {student.advisorId &&
+                    student.advisorId !== currentUser.id && (
+                      <button
+                        onClick={() => handleRequestAccess(student.id)}
+                        className="bg-blue-500 text-white py-1 px-3 rounded-lg hover:bg-blue-600 transition duration-150 text-xs font-semibold"
+                      >
+                        Request Access
+                      </button>
+                    )}
                 </td>
               </tr>
             ))}
