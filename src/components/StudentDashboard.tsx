@@ -43,15 +43,10 @@ interface FetchError extends Error {
   status?: number;
 }
 
-const fetchStudentData = async (): Promise<StudentDataResult> => {
+const fetchStudentData = async (userId: number): Promise<StudentDataResult> => {
   try {
-    const userResponse = await fetch("/api/me");
-    if (!userResponse.ok) {
-      throw new Error("Failed to get current user");
-    }
-    const user = await userResponse.json();
-
-    const response = await fetch(`/api/student-data/${user.id}`);
+    console.log("Fetching student data for user ID:", userId);
+    const response = await fetch(`/api/student-data/${userId}`);
     if (!response.ok) {
       const errorData = await response.json();
       throw new Error(errorData.error || "Failed to fetch student data");
@@ -85,7 +80,7 @@ export default function StudentDashboard({
     refetch: refetchStudentData,
   } = useQuery<StudentDataResult, FetchError>({
     queryKey: ["studentData", currentUser.id],
-    queryFn: fetchStudentData,
+    queryFn: () => fetchStudentData(currentUser.id), // Pass the currentUser.id to the function
     retry: 1,
   });
 
@@ -108,7 +103,6 @@ export default function StudentDashboard({
     return coursesMap.get(courseCode) || { name: courseCode, credits: 0 };
   };
 
-  // ... (維持既有的格式化和 UI 相關函式)
   const formatGrade = (grade: string) => {
     const numericGrade = parseFloat(grade);
     return numericGrade.toFixed(2);

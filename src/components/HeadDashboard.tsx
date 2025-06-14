@@ -1,4 +1,6 @@
 "use client";
+
+import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 
 interface Student {
@@ -36,6 +38,8 @@ interface HeadDashboardProps {
 }
 
 export default function HeadDashboard({ currentUser }: HeadDashboardProps) {
+  const router = useRouter();
+  
   const {
     data: students,
     isLoading,
@@ -49,6 +53,11 @@ export default function HeadDashboard({ currentUser }: HeadDashboardProps) {
 
   const handleRefresh = () => {
     refetch();
+  };
+
+  const handleViewTranscript = (studentId: number) => {
+    // Use window.location.href for a full page refresh to avoid cache issues
+    window.location.href = `/student/${studentId}/transcript`;
   };
 
   const formatDate = (dateString: string | null) => {
@@ -72,17 +81,17 @@ export default function HeadDashboard({ currentUser }: HeadDashboardProps) {
   const renderStudentsTable = () => {
     if (isLoading) {
       return (
-        <div className="py-10">
-          <p className="text-gray-600">Loading students...</p>
+        <div className="py-10 text-center">
+          <p className="text-white text-xl">Loading students...</p>
         </div>
       );
     }
 
     if (error) {
       return (
-        <div className="py-10">
-          <p className="text-red-600 mb-4">Error: {error.message}</p>
-          <button onClick={handleRefresh} className="bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition duration-150">
+        <div className="py-10 text-center">
+          <p className="text-white text-xl mb-4">Error: {error.message}</p>
+          <button onClick={handleRefresh} className="bg-yellow-500 text-white py-3 px-6 rounded-lg font-semibold hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-opacity-75 transition duration-150 ease-in-out shadow-md hover:shadow-lg">
             Try Again
           </button>
         </div>
@@ -91,8 +100,8 @@ export default function HeadDashboard({ currentUser }: HeadDashboardProps) {
 
     if (!students || students.length === 0) {
       return (
-        <div className="py-10">
-          <p className="text-gray-600">No students found in your program.</p>
+        <div className="py-10 text-center">
+          <p className="text-white text-xl">No students found.</p>
         </div>
       );
     }
@@ -121,10 +130,12 @@ export default function HeadDashboard({ currentUser }: HeadDashboardProps) {
                 <td className="py-4 px-4 text-sm text-gray-900">{student.advisorId ? `Advisor ID: ${student.advisorId}` : "Not Assigned"}</td>
                 <td className="py-4 px-4 text-sm text-gray-900">{formatDate(student.createdAt)}</td>
                 <td className="py-4 px-4 text-sm text-gray-900 text-center">
-                  {/* TODO: Replace with actual transcript link */}
-                  <a href={``} target="_blank" rel="noopener noreferrer" className="bg-green-500 text-white px-3 py-1 rounded text-xs hover:bg-green-600 transition duration-150 inline-block">
+                  <button 
+                    onClick={() => handleViewTranscript(student.id)}
+                    className="bg-green-500 text-white px-3 py-1 rounded text-xs hover:bg-green-600 transition duration-150 inline-block"
+                  >
                     View Transcript
-                  </a>
+                  </button>
                 </td>
               </tr>
             ))}

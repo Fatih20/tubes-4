@@ -6,11 +6,13 @@ import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import AdvisorDashboard from "@/components/AdvisorDashboard";
 import StudentDashboard from "@/components/StudentDashboard";
+import HeadDashboard from "@/components/HeadDashboard";
 
 interface User {
   id: number;
   username: string;
   role: string;
+  program?: string; // Add program field for heads
 }
 
 interface FetchError extends Error {
@@ -127,16 +129,7 @@ export default function Home() {
         return <StudentDashboard currentUser={currentUser} />;
       
       case "head":
-        return (
-          <div className="text-center">
-            <h2 className="text-3xl font-semibold mb-6 text-gray-700">
-              Program Head Dashboard
-            </h2>
-            <p className="text-lg text-gray-200">
-              Head dashboard features coming soon...
-            </p>
-          </div>
-        );
+        return <HeadDashboard currentUser={currentUser} />;
       
       default:
         return (
@@ -187,7 +180,7 @@ export default function Home() {
             >
               Try Again
             </button>
-          </div>
+            </div>
         ) : (
           <div className="py-4">
             {renderDashboardContent()}
