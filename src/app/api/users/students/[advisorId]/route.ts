@@ -1,11 +1,7 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import db from "@/db";
-import {
-  usersTable,
-  studentRecordsTable,
-  studentAdvisorsTable,
-} from "@/db/schema";
+import { studentRecordsTable, usersTable } from "@/db/schema";
 import { eq } from "drizzle-orm";
 
 export async function GET(
@@ -81,15 +77,11 @@ export async function GET(
         fullName: studentRecordsTable.fullName,
         gpa: studentRecordsTable.gpa,
         createdAt: studentRecordsTable.createdAt,
-        advisorId: studentAdvisorsTable.advisorId,
+        advisorId: studentRecordsTable.advisorId,
       })
-      .from(studentAdvisorsTable)
-      .innerJoin(usersTable, eq(studentAdvisorsTable.studentId, usersTable.id))
-      .leftJoin(
-        studentRecordsTable,
-        eq(usersTable.id, studentRecordsTable.userId)
-      )
-      .where(eq(studentAdvisorsTable.advisorId, advisorId));
+      .from(studentRecordsTable)
+      .innerJoin(usersTable, eq(studentRecordsTable.userId, usersTable.id))
+      .where(eq(studentRecordsTable.advisorId, advisorId));
 
     return NextResponse.json(studentsWithRecords);
   } catch (error) {
