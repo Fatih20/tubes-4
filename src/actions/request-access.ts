@@ -37,12 +37,12 @@ export const requestAccess = async (studentId: number, advisorId: number) => {
   const isAdvisor = studentRecord[0].advisorId === advisorId;
 
   const sharedKeys = advisor[0].studentSharedKeys as {
-    user_id: number;
-    shared_key: string;
+    student_id: number;
+    share: string;
   }[];
 
   const sharedKeyForStudent = sharedKeys.find(
-    (key) => key.user_id === studentId
+    (key) => key.student_id === studentId
   );
 
   // Check if request already exists
@@ -69,20 +69,30 @@ export const requestAccess = async (studentId: number, advisorId: number) => {
     // Update existing request
     const currentKeys =
       (existingRequest[0].collectedKeys as {
-        user_id: number;
-        shared_key: string;
+        student_id: number;
+        share: string;
       }[]) || [];
-    await db
-      .update(advisorStudentRequestsTable)
-      .set({
-        collectedKeys: [...currentKeys, sharedKeyForStudent],
-      })
-      .where(
-        and(
-          eq(advisorStudentRequestsTable.studentId, studentId),
-          eq(advisorStudentRequestsTable.advisorId, advisorId)
-        )
-      );
+
+    // Check if this advisor's share is already in the collected keys
+    const shareExists = currentKeys.some(
+      (key) =>
+        key.student_id === sharedKeyForStudent?.student_id &&
+        key.share === sharedKeyForStudent?.share
+    );
+
+    if (!shareExists) {
+      await db
+        .update(advisorStudentRequestsTable)
+        .set({
+          collectedKeys: [...currentKeys, sharedKeyForStudent],
+        })
+        .where(
+          and(
+            eq(advisorStudentRequestsTable.studentId, studentId),
+            eq(advisorStudentRequestsTable.advisorId, advisorId)
+          )
+        );
+    }
   }
 
   return {
