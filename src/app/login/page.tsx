@@ -2,7 +2,6 @@
 
 import { useState, FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { API_BASE_URL } from "@/lib/config";
 import { hashPassword } from "@/lib/authUtils";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -169,15 +168,6 @@ export default function LoginPage() {
               )}
             </button>
           </form>
-          <p className="mt-8 text-center text-sm text-gray-600">
-            Don&apos;t have an account?{" "}
-            <Link
-              href="/signup"
-              className="font-medium text-purple-600 hover:text-purple-500 transition duration-150 ease-in-out"
-            >
-              Sign up
-            </Link>
-          </p>
         </div>
       </div>
     </div>
