@@ -62,6 +62,10 @@ A secure academic transcript management system implementing multiple cryptograph
    http://localhost:3000
    ```
 
+## Deployed Application
+
+[The deployed application can also be accessed here.](https://tubes-4.vercel.app/)
+
 ## Task Assignment
 
 | No  | Task                                 | Assignee              | NIM      |
@@ -75,3 +79,4 @@ A secure academic transcript management system implementing multiple cryptograph
 | 7   | **Dekripsi dan Group-based Access**  | Fatih Nararya R. I.   | 13521060 |
 | 8   | **Laporan Transkrip Akademik**       | Jazmy Izzati Alamsyah | 18221124 |
 | 9   | **Bonus SHA-3**                      | Jazmy Izzati Alamsyah | 18221124 |
+| 10  | **Bonus Deployment**                 | Fatih Nararya R. I.   | 13521060 |
