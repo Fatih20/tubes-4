@@ -74,7 +74,7 @@ export default function Home() {
         return <StudentDashboard currentUser={currentUser} />;
 
       case "head":
-        return <HeadDashboard currentUser={currentUser} />;
+        return <HeadDashboard />;
 
       default:
         return (
