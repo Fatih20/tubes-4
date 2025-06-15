@@ -1,7 +1,9 @@
-// src/components/StudentDashboard.tsx
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import { transcriptGenerator, type StudentTranscriptData } from "@/lib/pdf/transcriptGenerator";
+import { encryptPDF } from "@/lib/crypto/rc4";
 
 interface StudentDashboardProps {
   currentUser: {
@@ -73,6 +75,10 @@ export default function StudentDashboard({
 }: StudentDashboardProps) {
   console.log("StudentDashboard - Current User:", currentUser);
 
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [showEncryptModal, setShowEncryptModal] = useState(false);
+  const [encryptionPassword, setEncryptionPassword] = useState("");
+
   const {
     data: studentData,
     isLoading: isLoadingStudentData,
@@ -80,7 +86,7 @@ export default function StudentDashboard({
     refetch: refetchStudentData,
   } = useQuery<StudentDataResult, FetchError>({
     queryKey: ["studentData", currentUser.id],
-    queryFn: () => fetchStudentData(currentUser.id), // Pass the currentUser.id to the function
+    queryFn: () => fetchStudentData(currentUser.id),
     retry: 1,
   });
 
@@ -149,6 +155,113 @@ export default function StudentDashboard({
       const courseInfo = getCourseInfo(grade.courseCode);
       return total + courseInfo.credits;
     }, 0);
+  };
+
+  // Helper function to get program head based on program
+  const getProgramHead = (program: string): string => {
+    switch (program) {
+      case 'IF':
+        return "Ir. Yudistira Dwi Wardhana Asnar, S.T, Ph.D.";
+      case 'STI':
+        return "Dr. I Gusti Bagus Baskara Nugraha, S.T., M.T., Ph.D.";
+      default:
+        return "Ir. Yudistira Dwi Wardhana Asnar, S.T, Ph.D."; // Default fallback to IF
+    }
+  };
+
+  const downloadPDF = async (encrypt: boolean = false, password: string = "") => {
+    if (!studentData || !studentData.studentRecord || !studentData.grades) {
+      alert("Cannot generate transcript: Student data not available");
+      return;
+    }
+
+    try {
+      setIsDownloading(true);
+
+      // Prepare transcript data
+      const transcriptData: StudentTranscriptData = {
+        nim: studentData.studentRecord.nim,
+        fullName: studentData.studentRecord.fullName,
+        program: studentData.studentRecord.program as 'IF' | 'STI',
+        gpa: parseFloat(studentData.studentRecord.gpa),
+        totalCredits: getTotalCredits(),
+        courses: studentData.grades.map(grade => {
+          const courseInfo = getCourseInfo(grade.courseCode);
+          return {
+            code: grade.courseCode,
+            name: courseInfo.name,
+            credits: courseInfo.credits,
+            grade: formatGrade(grade.grade)
+          };
+        }),
+        programHeadName: getProgramHead(studentData.studentRecord.program),
+        digitalSignature: studentData.publicKey || "DEMO_SIGNATURE_" + Date.now()
+      };
+
+      // Generate PDF
+      const pdfBytes = await transcriptGenerator.generatePDF(transcriptData);
+      
+      let finalPdfData: ArrayBuffer;
+      let filename = transcriptGenerator.generateFilename(transcriptData, encrypt);
+
+      // Encrypt if requested
+      if (encrypt && password) {
+        const encryptedBytes = encryptPDF(pdfBytes, password);
+        // Convert to ArrayBuffer for blob creation
+        finalPdfData = encryptedBytes.buffer.slice(
+          encryptedBytes.byteOffset,
+          encryptedBytes.byteOffset + encryptedBytes.byteLength
+        ) as ArrayBuffer;
+        filename = transcriptGenerator.generateFilename(transcriptData, true);
+      } else {
+        // Convert to ArrayBuffer for blob creation
+        finalPdfData = pdfBytes.buffer.slice(
+          pdfBytes.byteOffset,
+          pdfBytes.byteOffset + pdfBytes.byteLength
+        ) as ArrayBuffer;
+      }
+
+      // Create download using ArrayBuffer
+      const blob = new Blob([finalPdfData], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      // Show success message
+      const message = encrypt 
+        ? "Encrypted transcript downloaded successfully!" 
+        : "Transcript downloaded successfully!";
+      alert(message);
+
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      alert("Failed to generate transcript: " + (error instanceof Error ? error.message : "Unknown error"));
+    } finally {
+      setIsDownloading(false);
+      setShowEncryptModal(false);
+      setEncryptionPassword("");
+    }
+  };
+
+  const handleDownloadClick = () => {
+    setShowEncryptModal(true);
+  };
+
+  const handleDownloadWithoutEncryption = () => {
+    downloadPDF(false);
+  };
+
+  const handleDownloadWithEncryption = () => {
+    if (!encryptionPassword.trim()) {
+      alert("Please enter an encryption password");
+      return;
+    }
+    downloadPDF(true, encryptionPassword);
   };
 
   const renderTranscriptHeader = () => {
@@ -355,6 +468,64 @@ export default function StudentDashboard({
     );
   };
 
+  const renderEncryptionModal = () => {
+    if (!showEncryptModal) return null;
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+          <h3 className="text-lg font-medium text-gray-900 mb-4">
+            Download Transcript
+          </h3>
+          <p className="text-sm text-gray-600 mb-6">
+            Choose whether to download the transcript with or without encryption.
+          </p>
+          
+          <div className="space-y-4">
+            <button
+              onClick={handleDownloadWithoutEncryption}
+              disabled={isDownloading}
+              className="w-full bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition duration-150 disabled:opacity-50"
+            >
+              {isDownloading ? "Generating..." : "Download Without Encryption"}
+            </button>
+            
+            <div className="border-t pt-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Or encrypt with password:
+              </label>
+              <input
+                type="password"
+                value={encryptionPassword}
+                onChange={(e) => setEncryptionPassword(e.target.value)}
+                placeholder="Enter encryption password"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent mb-3 text-gray-900 bg-white placeholder-gray-400"
+              />
+              <button
+                onClick={handleDownloadWithEncryption}
+                disabled={isDownloading || !encryptionPassword.trim()}
+                className="w-full bg-green-500 text-white py-2 px-4 rounded-lg hover:bg-green-600 transition duration-150 disabled:opacity-50"
+              >
+                {isDownloading ? "Encrypting..." : "Download with Encryption"}
+              </button>
+            </div>
+          </div>
+          
+          <button
+            onClick={() => {
+              setShowEncryptModal(false);
+              setEncryptionPassword("");
+            }}
+            disabled={isDownloading}
+            className="w-full mt-4 bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400 transition duration-150 disabled:opacity-50"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="w-full max-w-6xl">
       <div className="mb-6">
@@ -371,19 +542,43 @@ export default function StudentDashboard({
             <h3 className="text-lg font-medium text-gray-800">
               Course Grades ({studentData?.grades?.length || 0} courses)
             </h3>
-            <button
-              onClick={handleRefresh}
-              className="bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition duration-150 text-sm"
-              disabled={isLoadingStudentData || isLoadingCourses}
-            >
-              {isLoadingStudentData || isLoadingCourses
-                ? "Loading..."
-                : "Refresh"}
-            </button>
+            <div className="flex space-x-2">
+              <button
+                onClick={handleDownloadClick}
+                disabled={isDownloading || !studentData?.grades?.length}
+                className="bg-green-500 text-white py-2 px-4 rounded-lg hover:bg-green-600 transition duration-150 text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+              >
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                  />
+                </svg>
+                <span>{isDownloading ? "Generating..." : "Download PDF"}</span>
+              </button>
+              <button
+                onClick={handleRefresh}
+                className="bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition duration-150 text-sm"
+                disabled={isLoadingStudentData || isLoadingCourses}
+              >
+                {isLoadingStudentData || isLoadingCourses
+                  ? "Loading..."
+                  : "Refresh"}
+              </button>
+            </div>
           </div>
           {renderTranscriptTable()}
         </div>
       </div>
+
+      {renderEncryptionModal()}
     </div>
   );
 }

@@ -1,4 +1,3 @@
-// src/lib/pdf/TranscriptGenerator.ts
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
@@ -26,6 +25,9 @@ export class TranscriptGenerator {
     const programFullName = data.program === 'IF' 
       ? 'Program Studi Teknik Informatika'
       : 'Program Studi Sistem dan Teknologi Informasi';
+
+    // Format signature for HTML display
+    const formattedSignature = this.wrapTextForHTML(data.digitalSignature, 80);
 
     // Generate course rows with new styling
     const courseRows = data.courses.map((course, index) => `
@@ -97,9 +99,7 @@ export class TranscriptGenerator {
       border-collapse: collapse;
       margin: 25px 0;
       font-size: 11px;
-      border-top: 1px solid #000;
-      border-left: 1px solid #000;
-      border-right: 1px solid #000;
+      border: 1px solid #000;
     }
     
     .courses-table th {
@@ -118,7 +118,7 @@ export class TranscriptGenerator {
     }
     
     .courses-table td:last-child {
-      border-right: none;
+      border-right: 1px solid #000;
     }
     
     .summary {
@@ -134,6 +134,7 @@ export class TranscriptGenerator {
     
     .signature-section {
       margin-top: 40px;
+      page-break-inside: avoid;
     }
     
     .signature-title {
@@ -145,14 +146,23 @@ export class TranscriptGenerator {
     .signature-markers {
       font-size: 11px;
       margin: 8px 0;
+      font-family: 'Courier New', monospace;
     }
     
     .signature-content {
       font-family: 'Courier New', monospace;
-      font-size: 9px;
+      font-size: 8px;
       margin: 10px 0;
       word-break: break-all;
-      line-height: 1.3;
+      line-height: 1.4;
+      text-align: justify;
+      padding: 0;
+      width: 100%;
+      white-space: pre-wrap;
+      background-color: #f9f9f9;
+      border: 1px solid #ddd;
+      padding: 10px;
+      min-height: 60px;
     }
     
     .signature-name {
@@ -185,10 +195,10 @@ export class TranscriptGenerator {
     <thead>
       <tr>
         <th style="width: 8%;">No</th>
-        <th style="width: 20%;">Kode mata kuliah</th>
-        <th style="width: 45%;">Nama mata kuliah</th>
-        <th style="width: 12%;">SKS</th>
-        <th style="width: 15%;">Nilai</th>
+        <th style="width: 18%;">Kode mata kuliah</th>
+        <th style="width: 52%;">Nama mata kuliah</th>
+        <th style="width: 10%;">SKS</th>
+        <th style="width: 12%;">Nilai</th>
       </tr>
     </thead>
     <tbody>
@@ -207,7 +217,7 @@ export class TranscriptGenerator {
     <div class="signature-title">Ketua Program Studi</div>
     
     <div class="signature-markers">--Begin signature--</div>
-    <div class="signature-content">${data.digitalSignature}</div>
+    <div class="signature-content">${formattedSignature}</div>
     <div class="signature-markers">--End signature--</div>
     
     <div class="signature-name">(${data.programHeadName})</div>
@@ -261,7 +271,7 @@ export class TranscriptGenerator {
       ? 'Program Studi Teknik Informatika'
       : 'Program Studi Sistem dan Teknologi Informasi';
 
-    currentY = addCenteredText(programFullName, currentY, 13, 'normal'); // Slightly smaller
+    currentY = addCenteredText(programFullName, currentY, 13, 'normal');
     currentY = addCenteredText('Sekolah Teknik Elektro dan Informatika', currentY + 4, 11, 'normal');
     currentY = addCenteredText('Institut Teknologi Bandung', currentY + 4, 11, 'normal');
 
@@ -272,7 +282,7 @@ export class TranscriptGenerator {
     currentY += 12;
 
     // Title
-    currentY = addCenteredText('Transkrip Akademik', currentY, 14, 'bold'); // Smaller title
+    currentY = addCenteredText('Transkrip Akademik', currentY, 14, 'bold');
     currentY += 8;
 
     // Student information
@@ -281,7 +291,7 @@ export class TranscriptGenerator {
     currentY += 12;
 
     // Prepare table data
-    const tableHeaders = ['No', 'Kode MK', 'Nama mata kuliah', 'SKS', 'Nilai']; // Shortened header
+    const tableHeaders = ['No', 'Kode MK', 'Nama mata kuliah', 'SKS', 'Nilai'];
     const tableData = data.courses.map((course, index) => [
       (index + 1).toString(),
       course.code,
@@ -290,18 +300,14 @@ export class TranscriptGenerator {
       course.grade
     ]);
 
-    // Calculate remaining space for table and signature
-    const signatureHeight = 80; // Estimated space needed for signature
-    const availableTableHeight = usableHeight - (currentY - margin) - signatureHeight;
-
     // Generate table with pagination support
     autoTable(doc, {
       head: [tableHeaders],
       body: tableData,
       startY: currentY,
       styles: {
-        fontSize: 9, // Smaller font
-        cellPadding: 2, // Less padding
+        fontSize: 9,
+        cellPadding: 2,
         overflow: 'linebreak',
         halign: 'center'
       },
@@ -321,18 +327,18 @@ export class TranscriptGenerator {
         fontSize: 9
       },
       columnStyles: {
-        0: { halign: 'center', cellWidth: 12 }, // No - smaller
-        1: { halign: 'center', cellWidth: 25 }, // Kode MK - smaller
-        2: { halign: 'left', cellWidth: 85 },   // Nama MK - slightly smaller
-        3: { halign: 'center', cellWidth: 12 }, // SKS - smaller
-        4: { halign: 'center', cellWidth: 18 }  // Nilai - smaller
+        0: { halign: 'center', cellWidth: 15 }, // No - slightly larger
+        1: { halign: 'center', cellWidth: 30 }, // Kode MK - larger
+        2: { halign: 'left', cellWidth: 90 },   // Nama MK - larger to fill space
+        3: { halign: 'center', cellWidth: 15 }, // SKS - slightly larger
+        4: { halign: 'center', cellWidth: 20 }  // Nilai - larger
       },
       theme: 'grid',
       tableLineColor: [0, 0, 0],
       tableLineWidth: 0.3,
       margin: { left: margin, right: margin },
-      pageBreak: 'auto', // Enable automatic page breaks
-      showHead: 'everyPage', // Show header on every page
+      pageBreak: 'auto',
+      showHead: 'everyPage',
       tableWidth: 'auto'
     });
 
@@ -341,22 +347,24 @@ export class TranscriptGenerator {
     currentY = (doc as any).lastAutoTable?.finalY || currentY + 50;
     currentY += 10;
 
-    // Check if we need a new page for signature
-    checkNewPage(signatureHeight);
-
     // Summary section
     currentY = addCenteredText(`Total Jumlah SKS = ${data.totalCredits}`, currentY, 11, 'normal');
     currentY = addCenteredText(`IPK = ${data.gpa.toFixed(2)}`, currentY + 4, 11, 'normal');
-    currentY += 15;
+    currentY += 20;
 
-    // Check again for signature section
-    checkNewPage(50);
+    // Calculate space needed for signature section
+    const cleanSignature = data.digitalSignature.replace(/\r?\n|\r/g, '').replace(/\s+/g, '');
+    const estimatedSignatureLines = Math.ceil(cleanSignature.length / 75); // More conservative estimate
+    const signatureHeight = 50 + (estimatedSignatureLines * 4.5); // Increased spacing
+
+    // Check if we need a new page for signature
+    checkNewPage(signatureHeight);
 
     // Digital signature section
     doc.setFontSize(11);
     doc.setFont('helvetica', 'bold');
     doc.text('Ketua Program Studi', margin, currentY);
-    currentY += 8;
+    currentY += 10;
 
     // Signature markers
     doc.setFont('helvetica', 'normal');
@@ -364,36 +372,56 @@ export class TranscriptGenerator {
     doc.text('--Begin signature--', margin, currentY);
     currentY += 6;
 
-    // Signature content - wrap it more aggressively to fit
+    // Draw signature box background
+    const signatureBoxHeight = Math.max(40, estimatedSignatureLines * 4.5); // Increased height
+    doc.setFillColor(249, 249, 249); // Light gray background
+    doc.rect(margin, currentY - 2, pageWidth - (margin * 2), signatureBoxHeight, 'F');
+    doc.setDrawColor(221, 221, 221); // Border color
+    doc.rect(margin, currentY - 2, pageWidth - (margin * 2), signatureBoxHeight, 'S');
+
+    // Signature content - calculate optimal character width
     doc.setFont('courier', 'normal');
-    doc.setFontSize(7); // Smaller signature font
-    const signatureLines = this.wrapText(data.digitalSignature, 90); // More characters per line
+    doc.setFontSize(7);
     
-    // Limit signature lines if too many
-    const maxSignatureLines = Math.min(signatureLines.length, 8);
-    for (let i = 0; i < maxSignatureLines; i++) {
-      if (currentY + 3 > pageHeight - margin) {
+    // Calculate max characters per line based on available width
+    const availableWidth = pageWidth - (margin * 2) - 6; // More padding
+    const charWidth = doc.getStringUnitWidth('X') * 7 / doc.internal.scaleFactor;
+    const maxCharsPerLine = Math.floor(availableWidth / charWidth) - 2; // Leave some buffer
+    
+    const signatureLines = this.wrapText(data.digitalSignature, maxCharsPerLine);
+    
+    // Draw signature lines with proper spacing
+    const lineHeight = 4; // Increased line height to prevent overlap
+    let signatureY = currentY + 4; // More initial padding
+    
+    for (let i = 0; i < signatureLines.length; i++) {
+      // Check if we need a new page
+      if (signatureY + lineHeight > pageHeight - margin - 25) {
         doc.addPage();
-        currentY = margin;
+        signatureY = margin + 25;
+        
+        // Redraw signature markers on new page
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(10);
+        doc.text('--Begin signature (continued)--', margin, margin + 15);
+        
+        // Draw new signature box on new page
+        doc.setFillColor(249, 249, 249);
+        doc.rect(margin, signatureY - 2, pageWidth - (margin * 2), 40, 'F');
+        doc.setDrawColor(221, 221, 221);
+        doc.rect(margin, signatureY - 2, pageWidth - (margin * 2), 40, 'S');
+        
+        doc.setFont('courier', 'normal');
+        doc.setFontSize(7);
       }
-      doc.text(signatureLines[i], margin, currentY);
-      currentY += 3;
+      
+      doc.text(signatureLines[i], margin + 3, signatureY);
+      signatureY += lineHeight;
     }
     
-    // If signature was truncated, add ellipsis
-    if (signatureLines.length > maxSignatureLines) {
-      doc.text('...', margin, currentY);
-      currentY += 3;
-    }
-    
-    currentY += 3;
+    currentY = Math.max(currentY + signatureBoxHeight + 8, signatureY + 4); // More spacing
 
     // End signature marker
-    if (currentY + 15 > pageHeight - margin) {
-      doc.addPage();
-      currentY = margin;
-    }
-    
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(10);
     doc.text('--End signature--', margin, currentY);
@@ -410,14 +438,18 @@ export class TranscriptGenerator {
   }
 
   /**
-   * Helper function to wrap text for signature display
+   * Helper function to wrap text for signature display in PDF
+   * Removes newlines and wraps only at page margins
    */
   private wrapText(text: string, maxLineLength: number): string[] {
+    // Remove all newlines and normalize whitespace first
+    const cleanText = text.replace(/\r?\n|\r/g, '').replace(/\s+/g, '');
+    
     const lines: string[] = [];
     let currentLine = '';
     
-    for (let i = 0; i < text.length; i++) {
-      currentLine += text[i];
+    for (let i = 0; i < cleanText.length; i++) {
+      currentLine += cleanText[i];
       if (currentLine.length >= maxLineLength) {
         lines.push(currentLine);
         currentLine = '';
@@ -429,6 +461,32 @@ export class TranscriptGenerator {
     }
     
     return lines;
+  }
+
+  /**
+   * Helper function to wrap text for HTML display
+   * Also removes newlines for consistent display
+   */
+  private wrapTextForHTML(text: string, maxLineLength: number): string {
+    // Remove all newlines and normalize whitespace first
+    const cleanText = text.replace(/\r?\n|\r/g, '').replace(/\s+/g, '');
+    
+    const lines: string[] = [];
+    let currentLine = '';
+    
+    for (let i = 0; i < cleanText.length; i++) {
+      currentLine += cleanText[i];
+      if (currentLine.length >= maxLineLength) {
+        lines.push(currentLine);
+        currentLine = '';
+      }
+    }
+    
+    if (currentLine.length > 0) {
+      lines.push(currentLine);
+    }
+    
+    return lines.join('\n');
   }
 
   /**
