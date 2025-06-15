@@ -14,10 +14,20 @@ interface RequestAccessPageProps {
 interface ApprovalStatus {
   approved: boolean;
   studentData?: {
-    id: number;
-    username: string;
-    fullName: string | null;
-    nim: string | null;
+    studentRecord: {
+      userId: number;
+      nim: string;
+      program: string;
+      fullName: string;
+      gpa: string;
+    };
+    grades: Array<{
+      userId: number;
+      courseCode: string;
+      grade: string;
+    }>;
+    verified: boolean;
+    publicKey: string;
   };
   approverCount?: number;
 }
@@ -55,8 +65,83 @@ export default function RequestAccessPage({ params }: RequestAccessPageProps) {
 
     if (approvalStatus?.approved) {
       return (
-        <div className="mb-4 p-4 bg-green-50 text-green-700 rounded-md">
-          Access granted! You can now view the student&apos;s record.
+        <div className="space-y-4">
+          <div className="mb-4 p-4 bg-green-50 text-green-700 rounded-md">
+            Access granted! You can now view the student&apos;s record.
+          </div>
+          {approvalStatus.studentData && (
+            <div className="space-y-6">
+              <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 text-gray-500">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                  Student Information
+                </h3>
+                <div className="space-y-3">
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Full Name:</span>
+                    <span className="font-medium">
+                      {approvalStatus.studentData.studentRecord.fullName}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">NIM:</span>
+                    <span className="font-medium">
+                      {approvalStatus.studentData.studentRecord.nim}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Program:</span>
+                    <span className="font-medium">
+                      {approvalStatus.studentData.studentRecord.program}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">GPA:</span>
+                    <span className="font-medium">
+                      {approvalStatus.studentData.studentRecord.gpa}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                  Course Grades
+                </h3>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Course Code
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Grade
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {approvalStatus.studentData.grades.map((grade, index) => (
+                        <tr key={index}>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {grade.courseCode}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {grade.grade}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {approvalStatus.studentData.verified && (
+                <div className="bg-green-50 p-4 rounded-md text-green-700">
+                  ✓ This record has been verified
+                </div>
+              )}
+            </div>
+          )}
         </div>
       );
     }
