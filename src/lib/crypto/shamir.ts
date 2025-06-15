@@ -197,6 +197,7 @@ function newCoordinates(): Readonly<Uint8Array> {
 
 // Helpers for declarative argument validation.
 const AssertArgument = {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-function-type
   instanceOf(object: any, constructor: Function, message: string) {
     if (object.constructor !== constructor) {
       throw new TypeError(message);
@@ -215,6 +216,7 @@ const AssertArgument = {
     }
   },
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   equalTo(a: any, b: any, message: string) {
     if (a !== b) {
       throw new Error(message);

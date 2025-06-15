@@ -44,7 +44,9 @@ const fetchCurrentUser = async () => {
       return { status: 401, error: "Unauthorized" };
     }
     const errorText = await response.text();
-    throw new Error(`Failed to fetch current user: ${response.status} ${errorText}`);
+    throw new Error(
+      `Failed to fetch current user: ${response.status} ${errorText}`
+    );
   }
   return response.json();
 };
@@ -62,7 +64,9 @@ interface StudentTranscriptPageProps {
   params: Promise<{ id: string }>;
 }
 
-export default function StudentTranscriptPage({ params }: StudentTranscriptPageProps) {
+export default function StudentTranscriptPage({
+  params,
+}: StudentTranscriptPageProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
 
@@ -72,7 +76,7 @@ export default function StudentTranscriptPage({ params }: StudentTranscriptPageP
     queryClient.invalidateQueries({ queryKey: ["studentData"] });
     queryClient.invalidateQueries({ queryKey: ["allStudents"] });
     queryClient.invalidateQueries({ queryKey: ["currentUser"] });
-  }, []); // Run once on mount
+  }, [queryClient]); // Run once on mount
 
   // Resolve params
   const { data: resolvedParams, isLoading: isLoadingParams } = useQuery({
@@ -105,13 +109,22 @@ export default function StudentTranscriptPage({ params }: StudentTranscriptPageP
     retry: 1,
   });
 
-  const currentUser = currentUserResponse && !("status" in currentUserResponse) ? (currentUserResponse as User) : undefined;
+  const currentUser =
+    currentUserResponse && !("status" in currentUserResponse)
+      ? (currentUserResponse as User)
+      : undefined;
 
   // Find the target student from the students list
-  const targetStudent = allStudents?.find((student) => student.id === studentId);
+  const targetStudent = allStudents?.find(
+    (student) => student.id === studentId
+  );
 
   useEffect(() => {
-    if (currentUserResponse && "status" in currentUserResponse && currentUserResponse.status === 401) {
+    if (
+      currentUserResponse &&
+      "status" in currentUserResponse &&
+      currentUserResponse.status === 401
+    ) {
       router.push("/login");
     }
   }, [currentUserResponse, router]);
@@ -125,7 +138,11 @@ export default function StudentTranscriptPage({ params }: StudentTranscriptPageP
       if (response.ok) {
         console.log("Logout successful");
       } else {
-        console.error("Logout API call failed:", response.status, await response.text());
+        console.error(
+          "Logout API call failed:",
+          response.status,
+          await response.text()
+        );
       }
     } catch (error) {
       console.error("Error fetching logout API:", error);
@@ -152,7 +169,11 @@ export default function StudentTranscriptPage({ params }: StudentTranscriptPageP
       <div className="min-h-screen w-full flex flex-col items-center bg-gradient-to-br from-purple-600 to-blue-500 p-4 text-white">
         <div className="py-10 text-center">
           <h2 className="text-3xl font-bold mb-4 text-white">Error</h2>
-          <p className="text-lg mb-6 text-white">{currentUserError?.message || studentsError?.message || "Invalid student ID"}</p>
+          <p className="text-lg mb-6 text-white">
+            {currentUserError?.message ||
+              studentsError?.message ||
+              "Invalid student ID"}
+          </p>
           <button
             onClick={handleBackToStudents}
             className="bg-yellow-500 text-white py-3 px-6 rounded-lg font-semibold hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-opacity-75 transition duration-150 ease-in-out shadow-md hover:shadow-lg"
@@ -178,8 +199,12 @@ export default function StudentTranscriptPage({ params }: StudentTranscriptPageP
     return (
       <div className="min-h-screen w-full flex flex-col items-center bg-gradient-to-br from-purple-600 to-blue-500 p-4 text-white">
         <div className="py-10 text-center">
-          <h2 className="text-3xl font-bold mb-4 text-white">Student Not Found</h2>
-          <p className="text-lg mb-6 text-white">The requested student could not be found.</p>
+          <h2 className="text-3xl font-bold mb-4 text-white">
+            Student Not Found
+          </h2>
+          <p className="text-lg mb-6 text-white">
+            The requested student could not be found.
+          </p>
           <button
             onClick={handleBackToStudents}
             className="bg-yellow-500 text-white py-3 px-6 rounded-lg font-semibold hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-opacity-75 transition duration-150 ease-in-out shadow-md hover:shadow-lg"
@@ -197,7 +222,9 @@ export default function StudentTranscriptPage({ params }: StudentTranscriptPageP
       <div className="min-h-screen w-full flex flex-col items-center bg-gradient-to-br from-purple-600 to-blue-500 p-4 text-white">
         <div className="py-10 text-center">
           <h2 className="text-3xl font-bold mb-4 text-white">Access Denied</h2>
-          <p className="text-lg mb-6 text-white">Students can only view their own transcript</p>
+          <p className="text-lg mb-6 text-white">
+            Students can only view their own transcript
+          </p>
           <button
             onClick={() => router.push("/")}
             className="bg-yellow-500 text-white py-3 px-6 rounded-lg font-semibold hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-opacity-75 transition duration-150 ease-in-out shadow-md hover:shadow-lg"
@@ -238,7 +265,11 @@ export default function StudentTranscriptPage({ params }: StudentTranscriptPageP
           >
             ← Back
           </button>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-100 truncate pr-2">{isViewingOtherStudent ? `${targetStudent.username}'s Transcript` : `Welcome, ${currentUser.username}!`}</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-100 truncate pr-2">
+            {isViewingOtherStudent
+              ? `${targetStudent.username}'s Transcript`
+              : `Welcome, ${currentUser.username}!`}
+          </h1>
         </div>
         <form onSubmit={handleLogout} className="flex-shrink-0">
           <button
@@ -252,7 +283,10 @@ export default function StudentTranscriptPage({ params }: StudentTranscriptPageP
 
       <main className="bg-white bg-opacity-20 backdrop-filter backdrop-blur-lg p-6 sm:p-8 rounded-xl shadow-2xl max-w-6xl w-full">
         <div className="py-4">
-          <StudentDashboard key={`student-${targetStudent.id}`} currentUser={studentUser} />
+          <StudentDashboard
+            key={`student-${targetStudent.id}`}
+            currentUser={studentUser}
+          />
         </div>
       </main>
     </div>

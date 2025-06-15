@@ -125,10 +125,7 @@ export const uploadStudentData = async (
 
   const headPrivateKey = keyFromPEM(programHead[0].privateKey) as RSAPrivateKey;
 
-  const { record: dbRecord, ...signature } = createSignedRecord(
-    signatureRecord,
-    headPrivateKey
-  );
+  const { ...signature } = createSignedRecord(signatureRecord, headPrivateKey);
 
   const signatureString = JSON.stringify(signature);
 

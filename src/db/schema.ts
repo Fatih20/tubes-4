@@ -5,11 +5,9 @@ import {
   text,
   pgEnum,
   timestamp,
-  real,
   jsonb,
   primaryKey,
   boolean,
-  PgArray,
 } from "drizzle-orm/pg-core";
 
 // Enum for user roles
